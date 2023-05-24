@@ -1,0 +1,51 @@
+---
+Title: "Test report"
+output: 
+ pdf_document:
+  fig_width: 7
+  fig_height: 6
+  fig_caption: true
+  fig_crop: false
+  dev: png
+---
+
+```{r include = FALSE}
+library(tidyverse)
+library(raster)
+library(rgdal)
+library(maptools)
+library(osmdata)
+library(sf)
+load('synth_tmp_locations.RData')
+```
+## The original density from worldpop is shown in the following figure:
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+  plot(city_raster, legend = F, main = sprintf("Worldpop density for %s: %s", country_name, city_name),
+               axes = T, ylab = "LAT", xlab = "LON")
+```
+
+## The households and other locations are:
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+plot(city_shp, legend = F, main = sprintf("%s: %s", country_name, city_name),
+               axes = T, ylab = "LAT", xlab = "LON")
+
+points(city_workplaces$longitude,city_workplaces$latitude, pch = 16, cex = 0.2, col = "#646464FF")
+points(city_houses$longitude, city_houses$latitude, col = "#00FF0020", pch = 16, cex = 0.2)
+points(city_schools$longitude,city_schools$latitude, pch = 16, cex = 0.2, col = "#0000FF50")
+```
+
+```{r include = FALSE}
+## PLOT LAND USE HISTOGRAM
+landuse_freq = as_tibble(buildings_pts@data) %>%
+              group_by(NewTag) %>%
+              tally() %>%
+              arrange(desc(n)) %>%
+              ungroup()
+```        
+
+## The distribution of locations by type is shown in the following histogram
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+barplot(landuse_freq$n, names.arg = landuse_freq$NewTag, cex.names = 0.6, las = 2)
+```
