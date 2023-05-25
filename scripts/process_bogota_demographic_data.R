@@ -7,7 +7,7 @@
 ##=======================================#
 library(tidyverse)
 
-datadir = '../data/raw_data/popdata'
+datadir = 'data/raw_data/popdata'
 popfile = file.path(datadir, 'OSB_Demografia-PiramideBogotaLocalidades.csv')
 
 ##=======================================#
@@ -48,12 +48,12 @@ pop_data = pop_df %>%
 ## mutate(MaxAge = str_replace_all(MaxAge,"above",'200')) %>%
 ## mutate(MinAge = as.integer(MinAge), MaxAge = as.integer(MaxAge))
 ## separate(col=AgeGroup, into=c("MinAge","MaxAge")) %>%
-write.csv(x = pop_data,file='../data/processed_data/popdata/bogota_population_data.csv',row.names = FALSE)
+write.csv(x = pop_data,file='data/processed_data/popdata/bogota_population_data.csv',row.names = FALSE)
 
 ##=======================================#
 ## Sector catastral--------
 ##=======================================#
-popfile_sec = '../data/raw_data/popdata/Bogota_sdp.xlsx'
+popfile_sec = 'data/raw_data/popdata/Bogota_sdp.xlsx'
 
 pop_household =  readxl::read_xlsx(popfile_sec, skip = 7, sheet = 2, n_max = 1088) %>%
     gather(key = PersonsHousehold, value = NumHouses, -c('Total', 'CODIGO_SEC')) %>%
@@ -84,6 +84,6 @@ pop_age$Gender[vec_gender <= 21] = "Male"
 pop_age = pop_age %>%
     dplyr::select(AgeGroup, Gender, Year, Pop, Code, Zone)
 
-write.csv(x = pop_age,file='../data/processed_data/popdata/bogota_population_data_sec.csv',row.names = FALSE)
-write.csv(x = pop_household,file='../data/processed_data/popdata/bogota_household_composition_sec.csv',row.names = FALSE)
+write.csv(x = pop_age,file='data/processed_data/popdata/bogota_population_data_sec.csv',row.names = FALSE)
+write.csv(x = pop_household,file='data/processed_data/popdata/bogota_household_composition_sec.csv',row.names = FALSE)
 
