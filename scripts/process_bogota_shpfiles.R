@@ -34,22 +34,25 @@ esc_data = esc_shp[,c('SCACODIGO', 'SCANOMBRE')]
 esc_data$Localidad = 0
 
 #esc_coor = coordinates(esc_shp)
-esc_coor = sf::st_coordinates(esc_shp)[,1:2]
-colnames(esc_coor) = c("LAT", "LON")
+esc_coor = sf::st_coordinates(esc_shp)
+esc_coor <- as_tibble(esc_coor) %>% group_by(L3) %>% 
+  summarise(X=mean(X), Y=mean(Y))
+esc_coor <- esc_coor[,2:3]
+colnames(esc_coor) = c("LON", "LAT")
 esc_coor = as.data.frame(esc_coor)
 #coordinates(esc_coor) = ~ LAT + LON
-esc_coor <- st_as_sf(esc_coor, coords = c("LAT", "LON"))
+esc_coor <- st_as_sf(esc_coor, coords = c("LON", "LAT"))
 #proj4string(esc_coor) = proj4string(localities_shp)
 st_crs(esc_coor) <- st_crs(localities_shp)
 
-#Continue the migration to sf
 for(ll in 1:nrow(localities_shp)){
     print(ll)
     #esc_locality = sp::over(esc_coor, localities_shp[ll,])
     esc_locality = sf::st_join(esc_coor, localities_shp[ll,])
-    esc_data$Localidad[which(!is.na(esc_locality[,1]))] = localities_shp$Identificad[ll]
+    esc_data$Localidad[which(!is.na(esc_locality$Nombre_de_l))] = localities_shp$Identificad[ll]
 }
 
+#Continue the migration to sf (there is a bug here)
 esc_data$Localidad[esc_data$SCACODIGO == '108108'] = 1
 esc_shp@data$Localidad = esc_data$Localidad
 esc_list = unique(as.character(esc_data$SCACODIGO))
