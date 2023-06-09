@@ -21,11 +21,11 @@ library(data.table)
 options(digits = 22,scipen = 999)
 
 
-data_dir = '../data/raw_data/microdata/11Bogota'
+data_dir = 'data/raw_data/microdata/11Bogota'
 
 country_name = "colombia"
 city_code = 11001
-formatted_dir = file.path("..", "output", "formatted_populations",
+formatted_dir = file.path("output", "formatted_populations",
                           sprintf("%s_%d", country_name, city_code))
 
 ##=======================================#
@@ -34,10 +34,12 @@ formatted_dir = file.path("..", "output", "formatted_populations",
 ## Read nursing homes data
 ## https://www.minsalud.gov.co/proteccionsocial/lists/oferta%20institucional%20personas%20mayores/todas%20las%20ofertas.aspx?Paged=TRUE&p_ID=540&PageFirstRow=621&&View=%7BC84CB794-1D1E-4A3B-9973-FE97E04FBD27%7D#InplviewHashc84cb794-1d1e-4a3b-9973-fe97e04fbd27=Paged%3DTRUE-p_ID%3D700-PageFirstRow%3D781
 
-esc_shp = rgdal::readOGR('../data/raw_data/geodata/scat_shp/scat_shp.shp')
-localidad_shp = rgdal::readOGR('../data/raw_data/geodata/localidades_bogota/poligonos-localidades.shp')
+esc_shp = rgdal::readOGR('data/raw_data/geodata/scat_shp/scat_shp.shp')
+localidad_shp = rgdal::readOGR('data/raw_data/geodata/localidades_bogota/poligonos-localidades.shp')
 
-lea_df = read_csv('../data/raw_data/popdata/LEA_Bogota.csv')    
+#Error: this file is not loaded 
+#Error message: Error in exists(cacheKey, where = .rs.WorkingDataEnv, inherits = FALSE) : invalid first argument Error in assign(cacheKey, frame, .rs.CachedDataEnv) : attempt to use zero-length variable name
+lea_df = read_csv('data/raw_data/popdata/LEA_Bogota.csv')    
 
 lea_coor = coordinates(lea_df %>% dplyr::select(Lat,Lon))
 colnames(lea_coor) = c("LAT", "LON")
@@ -74,17 +76,17 @@ text(x = coordinates(localidad_shp), labels = localidad_shp@data$Nombre_de_l, ce
 ## http://microdatos.dane.gov.co/index.php/catalog/643/datafile/F11
 ## LEA_Tipo de institución o establecimiento 1 Centro penitenciario 2 Institucion de proteccion e internado preventivo para niños, niñas y adolescentes 3 Centro de proteccion y atencion al adulto mayor 4 Convento, seminario, monasterio u otras instituciones similiares 5 Sede educativa con Poblacion interna 6 Cuartel, guarnicion militar (Ejercito, Armada y Fuerza AErea) 7 Comando de policIa, estacion de policIa 8 Campamento de trabajo 9 Casa de lenocinio o prostIbulo 10 Albergue de desplazados 11 Hogar de paz 12 Centrode rehabilitacion funcional 13 Casa de paso indigena No Aplica
 ## L_TIPO_INST == "3"
-geo_df = read_csv('../data/raw_data/microdata/11Bogota/CNPV2018_MGN_A2_11.CSV',
+geo_df = read_csv('data/raw_data/microdata/11Bogota/CNPV2018_MGN_A2_11.CSV',
                   col_types = cols(.default = "c")) %>%
     mutate(VIVCODIGO = sprintf("%09d%03d", as.numeric(COD_ENCUESTAS), as.numeric(U_VIVIENDA)))
 
 
-viv_df = read_csv('../data/raw_data/microdata/11Bogota/CNPV2018_1VIV_A2_11.CSV', col_types = cols(.default = "c")) %>%
+viv_df = read_csv('data/raw_data/microdata/11Bogota/CNPV2018_1VIV_A2_11.CSV', col_types = cols(.default = "c")) %>%
     mutate(VIVCODIGO = sprintf("%09d%03d", as.numeric(COD_ENCUESTAS), as.numeric(U_VIVIENDA)))%>%
     filter(UVA_USO_UNIDAD == "4", L_TIPO_INST %in% c("3")) %>%
     left_join(geo_df %>% dplyr::select(UA1_LOCALIDAD, U_MZA, VIVCODIGO), by = "VIVCODIGO")
 
-house_df = read_csv('../data/raw_data/microdata/11Bogota/CNPV2018_2HOG_A2_11.CSV',
+house_df = read_csv('data/raw_data/microdata/11Bogota/CNPV2018_2HOG_A2_11.CSV',
                     col_types = cols(.default = "c")) %>%
     mutate(VIVCODIGO = sprintf("%09d%03d", as.numeric(COD_ENCUESTAS), as.numeric(U_VIVIENDA))) %>%
     mutate(HOGCODIGO = sprintf("%09d%03d%02d", as.numeric(COD_ENCUESTAS), as.numeric(U_VIVIENDA), as.numeric(H_NROHOG))) %>%
@@ -92,7 +94,7 @@ house_df = read_csv('../data/raw_data/microdata/11Bogota/CNPV2018_2HOG_A2_11.CSV
 
 
 age_brks = seq(from = 0, by = 5, to = 105)
-age_data = read_csv('../data/processed_data/popdata/bogota_population_data_sec.csv')
+age_data = read_csv('data/processed_data/popdata/bogota_population_data_sec.csv')
 pop_data = age_data %>% group_by(AgeGroup, Gender) %>%
     summarize(Pop = sum(Pop)) %>%
     ungroup() %>%
@@ -106,7 +108,7 @@ brks = c(sort(pop_data$MinAge), 200)
 lbls = sprintf("%d-%d",brks[1:(length(brks) - 1)], brks[2:length(brks)] - 1)
 lbls[length(lbls)] = sprintf("%d-above", brks[length(brks) -1])
 
-people_df = read_csv('../data/raw_data/microdata/11Bogota/CNPV2018_5PER_A2_11.CSV',
+people_df = read_csv('data/raw_data/microdata/11Bogota/CNPV2018_5PER_A2_11.CSV',
                      col_types = cols(.default = "c")) %>%
     mutate(VIVCODIGO = sprintf("%09d%03d", as.numeric(COD_ENCUESTAS), as.numeric(U_VIVIENDA))) %>%
     mutate(HOGCODIGO = sprintf("%09d%03d%02d", as.numeric(COD_ENCUESTAS), as.numeric(U_VIVIENDA), as.numeric(P_NROHOG))) %>%
@@ -117,9 +119,6 @@ people_df$AGE = runif(rep(1,nrow(people_df)),
       min = age_brks[as.numeric(people_df$P_EDADR)],
       max = age_brks[as.numeric(people_df$P_EDADR) + 1])
 
-
-people_df = read_csv('../data/raw_data/microdata/11Bogota/CNPV2018_5PER_A2_11.CSV',
-                     col_types = cols(.default = "c"))
 
 workers_df = people_df %>%
     dplyr::select(P_EDADR, P_TRABAJO) %>%
