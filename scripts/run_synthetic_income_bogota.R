@@ -25,13 +25,13 @@ options(digits = 22,scipen = 999)
 ## 0. Data--------------
 ##===============================================================#
 ## Data
-synth_houses = read_csv('../output/formatted_populations/colombia_11001/colombia_11001_synth_households.txt', col_types = cols(.default = "c"))
-schools_df = read_csv('../output/formatted_populations/colombia_11001/colombia_11001_schools.txt',col_types = cols(.default = "c")) %>%
+synth_houses = read_csv('output/formatted_populations/colombia_11001/colombia_11001_synth_households.txt', col_types = cols(.default = "c"))
+schools_df = read_csv('output/formatted_populations/colombia_11001/colombia_11001_schools.txt',col_types = cols(.default = "c")) %>%
     mutate(latitude = as.numeric(latitude),
            longitude = as.numeric(longitude))
 
-esc_shp = rgdal::readOGR('../data/raw_data/geodata/scat_shp/scat_shp.shp')
-income_shp = rgdal::readOGR('../data/raw_data/geodata/manzana_estratificacion/ManzanaEstratificacion.shp')
+esc_shp = rgdal::readOGR('data/raw_data/geodata/scat_shp/scat_shp.shp')
+income_shp = rgdal::readOGR('data/raw_data/geodata/manzana_estratificacion/ManzanaEstratificacion.shp')
 income_shp@data$INCOME = as.numeric(as.character(income_shp@data$ESTRATO))
 
 ##===============================================================#
@@ -69,7 +69,7 @@ if(length(which(schools_df$income == 0)) > 0){
     schools_df$income[which(schools_df$income == 0)] = schools_income_df$income[as.numeric(apply(rgeos::gDistance(school_coor[which(schools_df$income == 0)], schools_income_coor, byid = T), 2,which.min))]
 }
 
-write_csv(schools_df, '../output/formatted_populations/colombia_11001/colombia_11001_schools.txt')
+write_csv(schools_df, 'output/formatted_populations/colombia_11001/colombia_11001_schools.txt')
 
 ##===============================================================#
 ## 2. Process households--------------
