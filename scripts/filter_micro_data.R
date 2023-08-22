@@ -11,7 +11,7 @@ library(tidyverse)
 ##===============================================================#
 ## Read and filter micro-data Colombia--------
 ##===============================================================#
-microdata_file = 'data/raw_data/microdata/ipumsi_colombia.csv'
+microdata_file = '../data/raw_data/microdata/ipumsi_colombia.csv'
 country_code = 170
 adm_codes = c(63001,11001,5001,27001,76001,8002)
 divipola_codes = c(170063001, 170011001, 170005001,170066001, 170076001, 170013001)
@@ -27,6 +27,6 @@ for(n in 1:length(adm_codes)){
                  AGE,SEX,SCHOOL,EMPSTAT,EMPSTATD,RELATE))
     
     write.csv(x = micro_data,
-              file=sprintf('data/processed_data/microdata/colombia_microdata_%d.csv',divipola_codes[n]), row.names = FALSE)
+              file=sprintf('../data/processed_data/microdata/colombia_microdata_%d.csv',divipola_codes[n]), row.names = FALSE)
 }
 

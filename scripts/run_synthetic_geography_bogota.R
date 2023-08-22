@@ -24,8 +24,8 @@ options(digits = 20,scipen = 999)
 ##===============================================================#
 country_name = "colombia"
 city_name = "Bogota"
-metadata_file = file.path("data", "param_files", "countries_latam_metadata.json")
-country_shp_file = "data/raw_data/geodata/Colombia_shp/Municipios.shp"
+metadata_file = file.path("..", "data", "param_files", "countries_latam_metadata.json")
+country_shp_file = "../data/raw_data/geodata/Colombia_shp/Municipios.shp"
 
 args = (commandArgs(TRUE))
 if(length(args) == 3){
@@ -43,13 +43,13 @@ print(sprintf("Running synthetic population generator for %s:%s from %s",country
 ## Poblacion barrios: https://www.datos.gov.co/Funci-n-p-blica/Listado-de-barrios-y-n-mero-de-habitantes/fcsx-656w
 ## Colegios: https://www.datos.gov.co/Educaci-n/Directorio-nico-de-establecimiento-Educativo-Bogot/5fy4-qx2f/data
 
-source('scripts/synthetic_geographic_locations_functions_bogota.R')
+source('./synthetic_geographic_locations_functions_bogota.R')
 
-processed_data_dir = file.path("data", "processed_data")
-outputdir_microdata = file.path('output','synthesized_microdata')
-raw_geodata_path = file.path('data','raw_data','geodata')
-report_dir = file.path("output","reports")
-osm_retag_file = file.path('data','processed_data','geodata','retag_OSM_buildings.csv')
+processed_data_dir = file.path("..","data", "processed_data")
+outputdir_microdata = file.path('..','output','synthesized_microdata')
+raw_geodata_path = file.path('..','data','raw_data','geodata')
+report_dir = file.path("..","output","reports")
+osm_retag_file = file.path('..','data','processed_data','geodata','retag_OSM_buildings.csv')
 
 ##===============================================================#
 ## 0. Process inputs--------
@@ -67,7 +67,7 @@ city_levels = unlist(city_data$city_levels)
 country_name_gdam = unlist(city_data$country_name_gdam)
 raster_file = unlist(city_data$raster_file)
 
-formatted_dir = file.path("output", "formatted_populations",
+formatted_dir = file.path("..", "output", "formatted_populations",
                           sprintf("%s_%d", country_name, city_code))
 
 
@@ -98,9 +98,9 @@ people_file = file.path(
 ## write_csv(zones_id_df, file.path(formatted_dir,'zones_list.csv'))
 
 
-barrios_shp = rgdal::readOGR('data/raw_data/geodata/barrios_bogota/barrios_prueba.shp')
-localities_shp = rgdal::readOGR('data/raw_data/geodata/localidades_bogota/poligonos-localidades.shp')
-esc_shp = rgdal::readOGR('data/raw_data/geodata/scat_shp/scat_shp.shp')
+barrios_shp = rgdal::readOGR('../data/raw_data/geodata/barrios_bogota/barrios_prueba.shp')
+localities_shp = rgdal::readOGR('../data/raw_data/geodata/localidades_bogota/poligonos-localidades.shp')
+esc_shp = rgdal::readOGR('../data/raw_data/geodata/scat_shp/scat_shp.shp')
 esc_data = esc_shp@data[,c('SCACODIGO', 'SCANOMBRE')]
 esc_data$Localidad = 0
 
@@ -120,9 +120,9 @@ esc_data$Localidad[esc_data$SCACODIGO == '108108'] = 1
 esc_shp@data$Localidad = esc_data$Localidad
 esc_list = unique(as.character(esc_data$SCACODIGO))
 esc_shp@data$ZONE = as.character(esc_shp@data$SCACODIGO)
-write_csv(esc_data, 'data/processed_data/geodata/Localidad_Unidad_Catastral.csv')
+write_csv(esc_data, '../data/processed_data/geodata/Localidad_Unidad_Catastral.csv')
 
-block_shp = rgdal::readOGR('data/processed_data/geodata/manzanas_bogota/manzanas_bogota.shp')
+block_shp = rgdal::readOGR('../data/processed_data/geodata/manzanas_bogota/manzanas_bogota.shp')
 block_coor = coordinates(block_shp)
 colnames(block_coor) = c("LAT", "LON")
 block_coor = as.data.frame(block_coor)
@@ -138,7 +138,7 @@ for(ee in 1:nrow(esc_shp)){
 
 block_shp@data$SCACODIGO = block_data$SCACODIGO
 
-write_csv(block_data, 'data/processed_data/geodata/Manzana_Unidad_Catastral.csv')
+write_csv(block_data, '../data/processed_data/geodata/Manzana_Unidad_Catastral.csv')
 
 ##===============================================================#
 ## Schools pop-----------
@@ -154,7 +154,7 @@ students_df = read_csv(people_file) %>%
     spread(key = GRADE, value = ENROLLED)     
 students_df$total = rowSums(students_df)
 
-universities_file = "data/raw_data/schooldata/colombia_matriculados_educacion_superior_2018.xlsx"
+universities_file = "../data/raw_data/schooldata/colombia_matriculados_educacion_superior_2018.xlsx"
 universities_df = readxl::read_xlsx(universities_file, skip = 5) %>%
     filter(Semestre == 1) %>%
     rename(mun_code = "Código del \r\nMunicipio\r\n(Programa)",

@@ -21,11 +21,11 @@ library(data.table)
 options(digits = 22,scipen = 999)
 
 
-data_dir = 'data/raw_data/microdata/11Bogota'
+data_dir = '../data/raw_data/microdata/11Bogota'
 
 country_name = "colombia"
 city_code = 11001
-formatted_dir = file.path("output", "formatted_populations",
+formatted_dir = file.path("..", "output", "formatted_populations",
                           sprintf("%s_%d", country_name, city_code))
 
 ##=======================================#
@@ -33,15 +33,15 @@ formatted_dir = file.path("output", "formatted_populations",
 ##=======================================#
 ## Read nursing homes data
 ## https://www.minsalud.gov.co/proteccionsocial/lists/oferta%20institucional%20personas%20mayores/todas%20las%20ofertas.aspx?Paged=TRUE&p_ID=540&PageFirstRow=621&&View=%7BC84CB794-1D1E-4A3B-9973-FE97E04FBD27%7D#InplviewHashc84cb794-1d1e-4a3b-9973-fe97e04fbd27=Paged%3DTRUE-p_ID%3D700-PageFirstRow%3D781
-esc_shp = rgdal::readOGR('data/raw_data/geodata/scat_shp/scat_shp.shp')
-localidad_shp = rgdal::readOGR('data/raw_data/geodata/localidades_bogota/poligonos-localidades.shp')
+esc_shp = rgdal::readOGR('../data/raw_data/geodata/scat_shp/scat_shp.shp')
+localidad_shp = rgdal::readOGR('../data/raw_data/geodata/localidades_bogota/poligonos-localidades.shp')
 
 localidad_data = localidad_shp@data %>%
     mutate(NameLocalidad = tolower(iconv(Nombre_de_l,from="UTF-8",to="ASCII//TRANSLIT")),
            LocalidadID = as.numeric(Identificad)) %>%
     dplyr::select(NameLocalidad, LocalidadID)
 
-lea_df = read_csv('data/raw_data/popdata/LEA_Bogota.csv')    
+lea_df = read_csv('../data/raw_data/popdata/LEA_Bogota.csv')    
 
 lea_coor = coordinates(lea_df %>% dplyr::select(Lat,Lon))
 colnames(lea_coor) = c("LAT", "LON")
@@ -75,7 +75,7 @@ text(x = coordinates(localidad_shp), labels = localidad_shp@data$Nombre_de_l, ce
 ##=======================================#
 ## Read updated list of residents--------
 ##=======================================#
-hogares_geriatricos = readxl::read_xlsx('data/raw_data/popdata/BASE_IPIPM_15042021_AJUSTADO.xlsx') %>%
+hogares_geriatricos = readxl::read_xlsx('../data/raw_data/popdata/BASE_IPIPM_15042021_AJUSTADO.xlsx') %>%
     rename('80_105' = "NÚMERO DE RESIDENTES CON 80 AÑOS O MÁS",
            '60_79' = "NÚMERO DE RESIDENTES DE 60 A 79 AÑOS",
            '40_59' = "NÚMERO DE RESIDENTES MENORES DE 60 AÑOS",

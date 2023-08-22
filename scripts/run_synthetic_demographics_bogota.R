@@ -23,7 +23,7 @@ options(digits = 20,scipen = 999)
 ##===============================================================#
 country_name = "colombia"
 city_name = "Bogota"
-metadata_file = file.path("data", "param_files", "countries_latam_metadata.json")
+metadata_file = file.path("..", "data", "param_files", "countries_latam_metadata.json")
 population_cap = -1
 args = (commandArgs(TRUE))
 if(length(args) == 3){
@@ -36,16 +36,16 @@ print(sprintf("Running synthetic population generator for %s:%s from %s",country
 ##===============================================================#
 ## Set up-------------
 ##===============================================================#
-source('scripts/synthetic_demography_functions.R')
+source('./synthetic_demography_functions.R')
 
-processed_data_dir = file.path("data", "processed_data")
-outputdir_microdata = file.path('output','synthesized_microdata')
-report_dir = file.path("output","reports")
+processed_data_dir = file.path("..","data", "processed_data")
+outputdir_microdata = file.path('..','output','synthesized_microdata')
+report_dir = file.path("..","output","reports")
 
-school_file = 'data/raw_data/schooldata/ESTADISTICAS_EN_EDUCACION_BASICA_POR_MUNICIPIO.csv'
-universities_file = "data/raw_data/schooldata/colombia_matriculados_educacion_superior_2018.xlsx"
+school_file = '../data/raw_data/schooldata/ESTADISTICAS_EN_EDUCACION_BASICA_POR_MUNICIPIO.csv'
+universities_file = "../data/raw_data/schooldata/colombia_matriculados_educacion_superior_2018.xlsx"
 ##workplace_file = "../data/raw_data/workplacedata/CENSUS_WORKPLACESv2.csv"
-workplace_file = 'data/processed_data/workplacedata/workplace_bogota_data.csv'
+workplace_file = '../data/processed_data/workplacedata/workplace_bogota_data.csv'
 
 ##===============================================================#
 ## 0. Process inputs--------
@@ -61,10 +61,10 @@ country_code = unlist(countries_datalist[[country_name]][[city_name]]$country_co
 
 city_levels = unlist(city_data$city_levels)
 country_name_gdam = unlist(city_data$country_name_gdam)
-#raster_file = unlist(city_data$raster_file)
-raster_file<-"data/raw_data/geodata/Colombia/COL_ppp_v2b_2015_UNadj.tif"
+raster_file = unlist(city_data$raster_file)
 
-formatted_dir = file.path("output", "formatted_populations",
+
+formatted_dir = file.path("..", "output", "formatted_populations",
                           sprintf("%s_%d", country_name, city_code))
 
 if(!dir.exists(formatted_dir)){dir.create(formatted_dir,recursive = T)}
@@ -74,19 +74,19 @@ if(!dir.exists(outputdir_microdata)){dir.create(outputdir_microdata, recursive =
 ##===============================================================#
 ## 1.2. Read zones age group file--------
 ##===============================================================#
-unidad_catastral = read_csv('data/processed_data/geodata/Localidad_Unidad_Catastral.csv') %>%
+unidad_catastral = read_csv('../data/processed_data/geodata/Localidad_Unidad_Catastral.csv') %>%
     filter(Localidad != 20)
-manzana_catastro = read_csv('data/processed_data/geodata/Manzana_Unidad_Catastral.csv')
+manzana_catastro = read_csv('../data/processed_data/geodata/Manzana_Unidad_Catastral.csv')
 geodata_info = left_join(manzana_catastro, unidad_catastral, by = "SCACODIGO")
 
-agegroup_df = read_csv('data/processed_data/popdata/bogota_population_data.csv')
+agegroup_df = read_csv('../data/processed_data/popdata/bogota_population_data.csv')
 zones_list = unique(agegroup_df$Zone)
 
 ##total_city_pop = sum(agegroup_df[agegroup_df$Gender != "Total","Pop"])
 
-age_sec_df = read_csv('data/processed_data/popdata/bogota_population_data_sec.csv') %>%
+age_sec_df = read_csv('../data/processed_data/popdata/bogota_population_data_sec.csv') %>%
     dplyr::filter(Zone %in% unidad_catastral$SCACODIGO)
-household_comp = read_csv('data/processed_data/popdata/bogota_household_composition_sec.csv') %>%
+household_comp = read_csv('../data/processed_data/popdata/bogota_household_composition_sec.csv') %>%
     dplyr::filter(Zone %in% unidad_catastral$SCACODIGO)
 
 total_city_pop = sum(age_sec_df$Pop)

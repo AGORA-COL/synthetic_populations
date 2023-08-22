@@ -19,15 +19,15 @@ library(RCurl)
 library(data.table)
 
 options(digits = 22, scipen = 999)
-source('scripts/synthetic_trajectories_functions_bogota.R')
+source('./synthetic_trajectories_functions_bogota.R')
 
 ##===============================================================#
 ## Read Input-------------
 ##===============================================================#
 country_name = "colombia"
 city_name = "Bogota"
-metadata_file = file.path("data", "param_files", "countries_latam_metadata.json")
-country_shp_file = "data/raw_data/geodata/Colombia_shp/Municipios.shp"
+metadata_file = file.path("..", "data", "param_files", "countries_latam_metadata.json")
+country_shp_file = "../data/raw_data/geodata/Colombia_shp/Municipios.shp"
 
 args = (commandArgs(TRUE))
 if(length(args) == 3){
@@ -40,9 +40,9 @@ print(sprintf("Running synthetic population generator for %s:%s from %s",country
 ##===============================================================#
 ## 0. Process inputs--------
 ##===============================================================#
-processed_data_dir = file.path("data", "processed_data")
-outputdir_microdata = file.path('output','synthesized_microdata')
-report_dir = file.path("output","reports")
+processed_data_dir = file.path("..","data", "processed_data")
+outputdir_microdata = file.path('..','output','synthesized_microdata')
+report_dir = file.path("..","output","reports")
 
 countries_datalist = rjson::fromJSON(
                                 file = metadata_file,
@@ -57,7 +57,7 @@ city_levels = unlist(city_data$city_levels)
 country_name_gdam = unlist(city_data$country_name_gdam)
 raster_file = unlist(city_data$raster_file)
 
-formatted_dir = file.path("output", "formatted_populations",
+formatted_dir = file.path("..", "output", "formatted_populations",
                           sprintf("%s_%d", country_name, city_code))
 
 
@@ -77,24 +77,24 @@ synth_houses = file.path(
     sprintf('%s_%d_synth_households.txt',country_name,city_code)
 )
 
-unidad_catastral = read_csv('data/processed_data/geodata/Localidad_Unidad_Catastral.csv') %>%
+unidad_catastral = read_csv('../data/processed_data/geodata/Localidad_Unidad_Catastral.csv') %>%
     filter(Localidad != 20)
-manzana_catastro = read_csv('data/processed_data/geodata/Manzana_Unidad_Catastral.csv')
+manzana_catastro = read_csv('../data/processed_data/geodata/Manzana_Unidad_Catastral.csv')
 ##geodata_info = left_join(manzana_catastro, unidad_catastral, by = "SCACODIGO")
 geodata_info = unidad_catastral
 
 ##===============================================================#
 ## 2. Read schools and workplaces----------------
 ##===============================================================#
-students_file = 'data/processed_data/schooldata/Students_by_localidad.csv'
-priv_students_file = 'data/processed_data/schooldata/Students_by_localidad_private.csv'
+students_file = '../data/processed_data/schooldata/Students_by_localidad.csv'
+priv_students_file = '../data/processed_data/schooldata/Students_by_localidad_private.csv'
 
-synth_schools = 'data/processed_data/schooldata/Schools_processed_capacity_bogota.csv'
-synth_priv_schools = 'data/processed_data/schooldata/Schools_processed_capacity_bogota_private.csv'
+synth_schools = '../data/processed_data/schooldata/Schools_processed_capacity_bogota.csv'
+synth_priv_schools = '../data/processed_data/schooldata/Schools_processed_capacity_bogota_private.csv'
 
-synth_colleges = 'data/processed_data/schooldata/IES_Bogota_Geo_ESC.csv'
-synth_workplaces = 'data/processed_data/workplacedata/workplace_bogota_data.csv'
-workers_mobility_file = 'data/processed_data/workplacedata/mobility_matrix_bogota_data.csv'
+synth_colleges = '../data/processed_data/schooldata/IES_Bogota_Geo_ESC.csv'
+synth_workplaces = '../data/processed_data/workplacedata/workplace_bogota_data.csv'
+workers_mobility_file = '../data/processed_data/workplacedata/mobility_matrix_bogota_data.csv'
 workers_mobility = read_csv(workers_mobility_file)
 
 students_mobility = read_csv(students_file) %>%
@@ -104,7 +104,7 @@ priv_students_mobility = read_csv(priv_students_file) %>%
 
 students_mobility_df = bind_rows(students_mobility, priv_students_mobility) %>%
     dplyr::select(-NameLocalidad)
-esc_shp = rgdal::readOGR('data/raw_data/geodata/scat_shp/scat_shp.shp')
+esc_shp = rgdal::readOGR('../data/raw_data/geodata/scat_shp/scat_shp.shp')
 
 ## Actually read data
 schools_df = read_csv(synth_schools)
@@ -131,7 +131,7 @@ brks = c(0,15,25,35,45,55,65,120)
 lbls = sprintf("%d-%d",brks[1:(length(brks) - 1)], brks[2:length(brks)] - 1)
 lbls[length(lbls)] = sprintf("%d-above", brks[length(brks) -1])
 
-census_workers = read_csv('data/raw_data/microdata/11Bogota/CNPV2018_5PER_A2_11.CSV') %>%
+census_workers = read_csv('../data/raw_data/microdata/11Bogota/CNPV2018_5PER_A2_11.CSV') %>%
     mutate(AgeGroup = as.character(cut(as.numeric(P_EDADR)*5 - 1, breaks = brks, labels = lbls, include.lowest = T, right = F))) %>%
     group_by(AgeGroup, P_TRABAJO) %>% summarize(N = n()) %>%
     ungroup() %>%

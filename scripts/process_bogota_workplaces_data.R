@@ -18,19 +18,19 @@ library(RCurl)
 library(data.table)
 options(digits = 20,scipen = 999)
 
-datadir = 'data/raw_data/popdata'
-workplaces_file = 'data/raw_data/workplacedata/08092020 Unidad Economica ID.xlsx'
-mov_file = 'data/raw_data/workplacedata/03_Anexo D_Movilidad.xlsx'
+datadir = '../data/raw_data/popdata'
+workplaces_file = '../data/raw_data/workplacedata/08092020 Unidad Economica ID.xlsx'
+mov_file = '../data/raw_data/workplacedata/03_Anexo D_Movilidad.xlsx'
 
 workers_data =  readxl::read_xlsx(workplaces_file, skip = 0, sheet = 1)
 ## 1. Find a location for workplaces missing location
 workers_nodata = workers_data[is.na(workers_data$Latitud),]
 workers_data = workers_data[!is.na(workers_data$Latitud),]
 
-localidad_shp = rgdal::readOGR('data/raw_data/geodata/localidades_bogota/poligonos-localidades.shp')
-block_shp = rgdal::readOGR('data/processed_data/geodata/manzanas_bogota/manzanas_bogota.shp')
-block_esc = read_csv('data/processed_data/geodata/Manzana_Unidad_Catastral.csv')
-esc_localidad = read_csv('data/processed_data/geodata/Localidad_Unidad_Catastral.csv') 
+localidad_shp = rgdal::readOGR('../data/raw_data/geodata/localidades_bogota/poligonos-localidades.shp')
+block_shp = rgdal::readOGR('../data/processed_data/geodata/manzanas_bogota/manzanas_bogota.shp')
+block_esc = read_csv('../data/processed_data/geodata/Manzana_Unidad_Catastral.csv')
+esc_localidad = read_csv('../data/processed_data/geodata/Localidad_Unidad_Catastral.csv') 
 block_localidad = left_join(esc_localidad, block_esc, by = "SCACODIGO")    
 
 block_tmp = filter(block_localidad, Localidad != 20)
@@ -89,7 +89,7 @@ mov_df =  readxl::read_xlsx(mov_file, skip = 9, sheet = 'IND_191', n_max = 428) 
     group_by(OrigenLocalidad) %>% mutate(Trips = Trips / sum(Trips))
     
 
-write_csv(workers_df, 'data/processed_data/workplacedata/workplace_bogota_data.csv')
-write_csv(mov_df, 'data/processed_data/workplacedata/mobility_matrix_bogota_data.csv')
+write_csv(workers_df, '../data/processed_data/workplacedata/workplace_bogota_data.csv')
+write_csv(mov_df, '../data/processed_data/workplacedata/mobility_matrix_bogota_data.csv')
     
            

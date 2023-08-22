@@ -19,14 +19,14 @@ library(data.table)
 options(digits = 20,scipen = 999)
 
 
-datadir = 'data/raw_data/popdata'
-schools_sed = 'data/raw_data/schooldata/20200908 Información Modelo Epidemiologico.xlsx'                         
-school_sedes_file = 'data/raw_data/schooldata/MATRÍCULA OFICIAL POR SEDE 31 DE AGOSTO 2020.xlsx'
+datadir = '../data/raw_data/popdata'
+schools_sed = '../data/raw_data/schooldata/20200908 Información Modelo Epidemiologico.xlsx'                         
+school_sedes_file = '../data/raw_data/schooldata/MATRÍCULA OFICIAL POR SEDE 31 DE AGOSTO 2020.xlsx'
 
-localities_shp = rgdal::readOGR('data/raw_data/geodata/localidades_bogota/poligonos-localidades.shp')
-esc_shp = rgdal::readOGR('data/raw_data/geodata/scat_shp/scat_shp.shp')
-unidad_catastral = read_csv('data/processed_data/geodata/Localidad_Unidad_Catastral.csv')
-localidad_list_df = read_csv('data/raw_data/geodata/Bogota_localidades_ID.csv')
+localities_shp = rgdal::readOGR('../data/raw_data/geodata/localidades_bogota/poligonos-localidades.shp')
+esc_shp = rgdal::readOGR('../data/raw_data/geodata/scat_shp/scat_shp.shp')
+unidad_catastral = read_csv('../data/processed_data/geodata/Localidad_Unidad_Catastral.csv')
+localidad_list_df = read_csv('../data/raw_data/geodata/Bogota_localidades_ID.csv')
 
 ##=======================================#
 ## Read IPM data--------
@@ -38,9 +38,9 @@ localidad_list_df = read_csv('data/raw_data/geodata/Bogota_localidades_ID.csv')
 ##            SchoolCode = as.numeric(CODIGO_DANE_Texto)) %>%
 ##     mutate(Income = 5 - Income)
 
-ipm_data_base = readxl::read_xlsx('data/raw_data/schooldata/IPM_EB_InstitucionEducativa.xlsx', sheet = 'IPM_Institución', skip = 1) %>%
+ipm_data_base = readxl::read_xlsx('../data/raw_data/schooldata/IPM_EB_InstitucionEducativa.xlsx', sheet = 'IPM_Institución', skip = 1) %>%
     dplyr::select(CODIGO_DANE_Texto, TOTAL_ALUMNOS, INCIDENCIA_AJUSTADA)
-ipm_data = readxl::read_xlsx('data/raw_data/schooldata/IPM_EB_InstitucionEducativa.xlsx', sheet = 'IPM_Institución', skip = 1) %>%
+ipm_data = readxl::read_xlsx('../data/raw_data/schooldata/IPM_EB_InstitucionEducativa.xlsx', sheet = 'IPM_Institución', skip = 1) %>%
     dplyr::select(CODIGO_DANE_Texto, TOTAL_ALUMNOS, INCIDENCIA_AJUSTADA) %>%
     mutate(Income = findInterval(INCIDENCIA_AJUSTADA,
                                  as.numeric(quantile(rep(ipm_data_base$INCIDENCIA_AJUSTADA, ipm_data_base$TOTAL_ALUMNOS), c(0,0.25,0.5,0.75,1)))))%>%
@@ -51,7 +51,7 @@ ipm_data = readxl::read_xlsx('data/raw_data/schooldata/IPM_EB_InstitucionEducati
 ##=======================================#
 ## Process school data--------
 ##=======================================#
-grades_age = read_csv('data/raw_data/schooldata/conversion_grados_edad.csv') %>%
+grades_age = read_csv('../data/raw_data/schooldata/conversion_grados_edad.csv') %>%
     mutate(Grade = tolower(iconv(Grade,from="UTF-8",to="ASCII//TRANSLIT")))
 
 school_data = readxl::read_xlsx(schools_sed, skip = 1, sheet = 'P1.1', n_max = 422) %>%
@@ -122,7 +122,7 @@ for(ll in 1:length(localidad_list)){
 }
 
 school_location_loc$SchoolType = "Public"
-write_csv(school_location_loc, 'data/processed_data/schooldata/Schools_processed_capacity_bogota.csv')
+write_csv(school_location_loc, '../data/processed_data/schooldata/Schools_processed_capacity_bogota.csv')
 
 ##=======================================#
 ## Process students by locality--------
@@ -172,12 +172,12 @@ localidad_students_residents = residence_students %>%
     ## mutate(ResidentStudents = ResidenceProp * Students)%>%
     ##     filter(NumberLocalidad != 20) ## Exclude Sumapaz
 
-write_csv(localidad_students_residents, 'data/processed_data/schooldata/Students_by_localidad.csv')    
+write_csv(localidad_students_residents, '../data/processed_data/schooldata/Students_by_localidad.csv')    
 
 ##=======================================#
 ## Private school data--------
 ##=======================================#
-schools_priv = 'data/raw_data/schooldata/Consulta Anexo5A 31032020.xlsx'
+schools_priv = '../data/raw_data/schooldata/Consulta Anexo5A 31032020.xlsx'
 
 priv_school_data = readxl::read_xlsx(schools_priv, skip = 4, sheet = 'P1') %>%
     rename(SchoolCode = "Código DANE del establecimiento",
@@ -258,12 +258,12 @@ priv_school_location_df_out = priv_school_location_df %>%
     mutate(SchoolType = "Private")
 
 
-write_csv(priv_school_location_df_out, 'data/processed_data/schooldata/Schools_processed_capacity_bogota_private.csv')
+write_csv(priv_school_location_df_out, '../data/processed_data/schooldata/Schools_processed_capacity_bogota_private.csv')
 
 ##=======================================#
 ## PRIV. SCHOOLS MOVILITY--------
 ##=======================================#
-priv_school_localidad = readxl::read_xlsx('data/raw_data/schooldata/EstudiantesLocalidadPrivados.xlsx',
+priv_school_localidad = readxl::read_xlsx('../data/raw_data/schooldata/EstudiantesLocalidadPrivados.xlsx',
                                           skip = 1) %>%
     gather(key = LocalidadSchool, value = PropResidenceStudents, -LocalidadResidencia) %>%
     group_by(LocalidadSchool) %>%
@@ -282,12 +282,12 @@ priv_localidad_students = priv_school_location_df_out %>%
     separate(AgeGroup, into = c("MinAge", "MaxAge"), remove = F) %>%
     rename(Grade = AgeGroup)
 
-write_csv(priv_localidad_students, 'data/processed_data/schooldata/Students_by_localidad_private.csv')
+write_csv(priv_localidad_students, '../data/processed_data/schooldata/Students_by_localidad_private.csv')
 
 ##=======================================#
 ## COLLEGES--------
 ##=======================================#
-ies_df = readxl::read_xlsx('data/raw_data/schooldata/Matricula_IES_IETDH.xlsx', sheet = 'ESBOGOTA IES') %>%
+ies_df = readxl::read_xlsx('../data/raw_data/schooldata/Matricula_IES_IETDH.xlsx', sheet = 'ESBOGOTA IES') %>%
     separate('# Localidad', into = c('Localidad_ID', 'Localidad_Name')) %>%
     mutate(Localidad_ID = as.numeric(Localidad_ID)) %>%
     rename(name = 'Nombre Institución',
