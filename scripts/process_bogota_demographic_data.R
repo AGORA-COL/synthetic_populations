@@ -7,6 +7,8 @@
 ##=======================================#
 library(tidyverse)
 
+setwd("scripts")
+
 datadir = '../data/raw_data/popdata'
 popfile = file.path(datadir, 'OSB_Demografia-PiramideBogotaLocalidades.csv')
 

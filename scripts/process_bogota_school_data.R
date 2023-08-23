@@ -9,8 +9,8 @@ library(dplyr)
 library(tidyverse)
 library(sf)
 library(raster)
-library(rgdal)
-library(maptools)
+#library(rgdal)
+#library(maptools)
 library(osmdata)
 library(RColorBrewer)
 library(osmplotr)
@@ -18,14 +18,19 @@ library(RCurl)
 library(data.table)
 options(digits = 20,scipen = 999)
 
+setwd("scripts")
 
 datadir = '../data/raw_data/popdata'
 schools_sed = '../data/raw_data/schooldata/20200908 Información Modelo Epidemiologico.xlsx'                         
 school_sedes_file = '../data/raw_data/schooldata/MATRÍCULA OFICIAL POR SEDE 31 DE AGOSTO 2020.xlsx'
 
-localities_shp = rgdal::readOGR('../data/raw_data/geodata/localidades_bogota/poligonos-localidades.shp')
-esc_shp = rgdal::readOGR('../data/raw_data/geodata/scat_shp/scat_shp.shp')
+#localities_shp = rgdal::readOGR('../data/raw_data/geodata/localidades_bogota/poligonos-localidades.shp')
+localities_shp = sf::st_read('../data/raw_data/geodata/localidades_bogota/poligonos-localidades.shp')
+#esc_shp = rgdal::readOGR('../data/raw_data/geodata/scat_shp/scat_shp.shp')
+esc_shp = sf::st_read('../data/raw_data/geodata/scat_shp/scat_shp.shp')
+esc_shp <- st_make_valid(esc_shp)
 unidad_catastral = read_csv('../data/processed_data/geodata/Localidad_Unidad_Catastral.csv')
+unidad_catastral$Localidad<-as.numeric(unidad_catastral$Localidad)
 localidad_list_df = read_csv('../data/raw_data/geodata/Bogota_localidades_ID.csv')
 
 ##=======================================#
@@ -97,30 +102,49 @@ school_location_df = readxl::read_xlsx(school_sedes_file, skip = 1, sheet = 'Hoj
 ##=======================================#
 localidad_list = unique(school_location_df$NumberLocalidad)
 school_location_loc = tibble()
-for(ll in 1:length(localidad_list)){
-    ind_coors = which(school_location_df$NumberLocalidad == localidad_list[ll])
-    loc_unidad_catastral = filter(unidad_catastral, Localidad == localidad_list[ll])
-    esc_loc_shp = esc_shp[esc_shp@data$SCACODIGO %in% loc_unidad_catastral$SCACODIGO,]
-    tmp_school_location = filter(school_location_df, NumberLocalidad == localidad_list[ll])
-
-    school_coor = coordinates(tmp_school_location %>% dplyr::select(latitude, longitude)) 
-    colnames(school_coor) = c("LAT", "LON")
-    school_coor = as.data.frame(school_coor)
-    coordinates(school_coor) = ~  LON + LAT
-    proj4string(school_coor) = proj4string(esc_shp)
+#for(ll in 1:length(localidad_list)){
+#    ind_coors = which(school_location_df$NumberLocalidad == localidad_list[ll])
+#    loc_unidad_catastral = filter(unidad_catastral, Localidad == localidad_list[ll])
+#    esc_loc_shp = esc_shp[esc_shp@data$SCACODIGO %in% loc_unidad_catastral$SCACODIGO,]
+#    tmp_school_location = filter(school_location_df, NumberLocalidad == localidad_list[ll])
+#    school_coor = coordinates(tmp_school_location %>% dplyr::select(latitude, longitude)) 
+#    colnames(school_coor) = c("LAT", "LON")
+#    school_coor = as.data.frame(school_coor)
+#    coordinates(school_coor) = ~  LON + LAT
+#    proj4string(school_coor) = proj4string(esc_shp)
     
-    for(ss in 1:nrow(esc_loc_shp)){
-        school_esc = sp::over(school_coor, esc_loc_shp[ss,])
-        if(length(which(!is.na(school_esc[,1]))) > 0){
-            tmp_school_location$Zone[which(!is.na(school_esc[,1]))] = as.character(esc_loc_shp@data$SCACODIGO[ss])
-        }
+#    for(ss in 1:nrow(esc_loc_shp)){
+#        school_esc = sp::over(school_coor, esc_loc_shp[ss,])
+#        if(length(which(!is.na(school_esc[,1]))) > 0){
+#            tmp_school_location$Zone[which(!is.na(school_esc[,1]))] = as.character(esc_loc_shp@data$SCACODIGO[ss])
+#        }
+#    }
+#    if(length(which(tmp_school_location$Zone == "")) > 0){
+#        tmp_school_location$Zone[which(tmp_school_location$Zone == "")] = as.character(esc_loc_shp@data$SCACODIGO[as.numeric(apply(rgeos::gDistance(school_coor[which(tmp_school_location$Zone == "")], esc_loc_shp, byid = T), 2,which.min))])
+#    }
+#    school_location_loc = bind_rows(school_location_loc, tmp_school_location)
+#}
+for(ll in 1:length(localidad_list)){
+  ind_coors = which(school_location_df$NumberLocalidad == localidad_list[ll])
+  loc_unidad_catastral = filter(unidad_catastral, Localidad == localidad_list[ll])
+  esc_loc_shp = esc_shp[esc_shp$SCACODIGO %in% loc_unidad_catastral$SCACODIGO,]
+  tmp_school_location = filter(school_location_df, NumberLocalidad == localidad_list[ll])
+  school_coor = st_as_sf(tmp_school_location, coords = c("longitude", "latitude"),crs = st_crs(esc_shp)) 
+  
+  for(ss in 1:nrow(esc_loc_shp)){
+    school_esc = sf::st_join(school_coor, esc_loc_shp[ss,])
+    if(length(which(!is.na(school_esc$SCACODIGO))) > 0){
+      tmp_school_location$Zone[which(!is.na(school_esc$SCACODIGO))] = as.character(esc_loc_shp$SCACODIGO[ss])
     }
-    if(length(which(tmp_school_location$Zone == "")) > 0){
-        tmp_school_location$Zone[which(tmp_school_location$Zone == "")] = as.character(esc_loc_shp@data$SCACODIGO[as.numeric(apply(rgeos::gDistance(school_coor[which(tmp_school_location$Zone == "")], esc_loc_shp, byid = T), 2,which.min))])
-    }
-    school_location_loc = bind_rows(school_location_loc, tmp_school_location)
+  }
+  if(length(which(tmp_school_location$Zone == "")) > 0){
+    tmp_school_location$Zone[which(tmp_school_location$Zone == "")] = as.character(esc_loc_shp$SCACODIGO[as.numeric(apply(sf::st_distance(school_coor[which(tmp_school_location$Zone == ""),], esc_loc_shp), 1,which.min))])
+  }
+  school_location_loc = bind_rows(school_location_loc, tmp_school_location)
 }
 
+#block_data$SCACODIGO[which(!is.na(block_esc[,1])[,1])] = as.character(esc_shp$SCACODIGO[ee])
+#esc_data$upz[which(esc_data$upz == "")] = as.character(upz_shp$UPlCodigo[as.numeric(apply(sf::st_distance(esc_coor[which(esc_data$upz == ""),], upz_shp), 1,which.min))])
 school_location_loc$SchoolType = "Public"
 write_csv(school_location_loc, '../data/processed_data/schooldata/Schools_processed_capacity_bogota.csv')
 
@@ -229,26 +253,44 @@ priv_school_unique = priv_school_location_df %>%
 ## Add zone from ESC data
 localidad_list = unique(school_location_df$NumberLocalidad)
 priv_school_location_loc = tibble()
+#for(ll in 1:length(localidad_list)){
+#    ind_coors = which(priv_school_unique$NumberLocalidad == localidad_list[ll])
+#    loc_unidad_catastral = filter(unidad_catastral, Localidad == localidad_list[ll])
+#    esc_loc_shp = esc_shp[esc_shp@data$SCACODIGO %in% loc_unidad_catastral$SCACODIGO,]
+#    tmp_school_location = filter(priv_school_unique, NumberLocalidad == localidad_list[ll])
+#    school_coor = coordinates(tmp_school_location %>% dplyr::select(latitude, longitude)) 
+#    colnames(school_coor) = c("LAT", "LON")
+#    school_coor = as.data.frame(school_coor)
+#    coordinates(school_coor) = ~  LON + LAT
+#    proj4string(school_coor) = proj4string(esc_shp)
+#    
+#    for(ss in 1:nrow(esc_loc_shp)){
+#        school_esc = sp::over(school_coor, esc_loc_shp[ss,])
+#        if(length(which(!is.na(school_esc[,1]))) > 0){
+#            tmp_school_location$Zone[which(!is.na(school_esc[,1]))] = as.character(esc_loc_shp@data$SCACODIGO[ss])
+#        }
+#    }
+#    if(length(which(tmp_school_location$Zone == "")) > 0){
+#        tmp_school_location$Zone[which(tmp_school_location$Zone == "")] = as.character(esc_loc_shp@data$SCACODIGO[as.numeric(apply(rgeos::gDistance(school_coor[which(tmp_school_location$Zone == "")], esc_loc_shp, byid = T), 2,which.min))])
+#    }
+#    priv_school_location_loc = bind_rows(priv_school_location_loc, tmp_school_location)
+#}
+
 for(ll in 1:length(localidad_list)){
     ind_coors = which(priv_school_unique$NumberLocalidad == localidad_list[ll])
     loc_unidad_catastral = filter(unidad_catastral, Localidad == localidad_list[ll])
-    esc_loc_shp = esc_shp[esc_shp@data$SCACODIGO %in% loc_unidad_catastral$SCACODIGO,]
+    esc_loc_shp = esc_shp[esc_shp$SCACODIGO %in% loc_unidad_catastral$SCACODIGO,]
     tmp_school_location = filter(priv_school_unique, NumberLocalidad == localidad_list[ll])
-
-    school_coor = coordinates(tmp_school_location %>% dplyr::select(latitude, longitude)) 
-    colnames(school_coor) = c("LAT", "LON")
-    school_coor = as.data.frame(school_coor)
-    coordinates(school_coor) = ~  LON + LAT
-    proj4string(school_coor) = proj4string(esc_shp)
+    school_coor = st_as_sf(tmp_school_location, coords = c("longitude", "latitude"),crs = st_crs(esc_shp))
     
     for(ss in 1:nrow(esc_loc_shp)){
-        school_esc = sp::over(school_coor, esc_loc_shp[ss,])
-        if(length(which(!is.na(school_esc[,1]))) > 0){
-            tmp_school_location$Zone[which(!is.na(school_esc[,1]))] = as.character(esc_loc_shp@data$SCACODIGO[ss])
-        }
+      school_esc = sf::st_join(school_coor, esc_loc_shp[ss,])
+      if(length(which(!is.na(school_esc$SCACODIGO))) > 0){
+        tmp_school_location$Zone[which(!is.na(school_esc$SCACODIGO))] = as.character(esc_loc_shp$SCACODIGO[ss])
+      }
     }
     if(length(which(tmp_school_location$Zone == "")) > 0){
-        tmp_school_location$Zone[which(tmp_school_location$Zone == "")] = as.character(esc_loc_shp@data$SCACODIGO[as.numeric(apply(rgeos::gDistance(school_coor[which(tmp_school_location$Zone == "")], esc_loc_shp, byid = T), 2,which.min))])
+      tmp_school_location$Zone[which(tmp_school_location$Zone == "")] = as.character(esc_loc_shp$SCACODIGO[as.numeric(apply(sf::st_distance(school_coor[which(tmp_school_location$Zone == ""),], esc_loc_shp), 1,which.min))])
     }
     priv_school_location_loc = bind_rows(priv_school_location_loc, tmp_school_location)
 }
@@ -287,6 +329,7 @@ write_csv(priv_localidad_students, '../data/processed_data/schooldata/Students_b
 ##=======================================#
 ## COLLEGES--------
 ##=======================================#
+#ACÁ VAMOS
 ies_df = readxl::read_xlsx('../data/raw_data/schooldata/Matricula_IES_IETDH.xlsx', sheet = 'ESBOGOTA IES') %>%
     separate('# Localidad', into = c('Localidad_ID', 'Localidad_Name')) %>%
     mutate(Localidad_ID = as.numeric(Localidad_ID)) %>%
