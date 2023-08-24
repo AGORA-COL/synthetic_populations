@@ -329,7 +329,6 @@ write_csv(priv_localidad_students, '../data/processed_data/schooldata/Students_b
 ##=======================================#
 ## COLLEGES--------
 ##=======================================#
-#ACÁ VAMOS
 ies_df = readxl::read_xlsx('../data/raw_data/schooldata/Matricula_IES_IETDH.xlsx', sheet = 'ESBOGOTA IES') %>%
     separate('# Localidad', into = c('Localidad_ID', 'Localidad_Name')) %>%
     mutate(Localidad_ID = as.numeric(Localidad_ID)) %>%
@@ -370,39 +369,65 @@ ies_df = ies_df %>%
 ies_df$Localidad_ID[which(is.na(ies_df$Localidad_ID))] = sample.int(19, length(which(is.na(ies_df$Localidad_ID))), replace = T)
 
 ## Assign lat,lon
-localities_data_shp = localities_shp@data %>% mutate(ROW = row_number())
+
+#localities_data_shp = localities_shp@data %>% mutate(ROW = row_number())
+localities_data_shp = localities_shp %>% mutate(ROW = row_number())
 localities_data_shp$Localidad_ID = as.numeric(localities_data_shp$Identificad)
 ies_df$LAT = 0
 ies_df$LON = 0
+#for(ll in 1:nrow(localities_data_shp)){
+#    cat("\rLocalidad: ", ll)
+#    localidad_tmp_shp = localities_shp[ll,]
+#    proj4string(localidad_tmp_shp) = proj4string(localities_shp)
+#    ies_loc_ind = which(ies_df$Localidad_ID == localities_data_shp$Localidad_ID[ll])
+#    if(length(ies_loc_ind) == 0){next}
+#    ## MAybe use tryCatch if too many errors with iter too small
+#    ies_points = sp::spsample(localidad_tmp_shp, n = length(ies_loc_ind), "random",iter = 20)
+#    ies_df$LAT[ies_loc_ind] = coordinates(ies_points)[,'y']
+#    ies_df$LON[ies_loc_ind] = coordinates(ies_points)[,'x']               
+#}   
+
 for(ll in 1:nrow(localities_data_shp)){
-    cat("\rLocalidad: ", ll)
-    localidad_tmp_shp = localities_shp[ll,]
-    proj4string(localidad_tmp_shp) = proj4string(localities_shp)
-    ies_loc_ind = which(ies_df$Localidad_ID == localities_data_shp$Localidad_ID[ll])
-    if(length(ies_loc_ind) == 0){next}
-    
-    ## MAybe use tryCatch if too many errors with iter too small
-    ies_points = sp::spsample(localidad_tmp_shp, n = length(ies_loc_ind), "random",iter = 20)
-    ies_df$LAT[ies_loc_ind] = coordinates(ies_points)[,'y']
-    ies_df$LON[ies_loc_ind] = coordinates(ies_points)[,'x']               
+  cat("\rLocalidad: ", ll)
+  localidad_tmp_shp = localities_shp[ll,]
+  localidad_tmp_shp <- st_set_crs(localidad_tmp_shp, st_crs(localities_shp))
+  ies_loc_ind = which(ies_df$Localidad_ID == localities_data_shp$Localidad_ID[ll])
+  if(length(ies_loc_ind) == 0){next}
+  
+  ## MAybe use tryCatch if too many errors with iter too small
+  ies_points <- st_sample(localidad_tmp_shp, size = length(ies_loc_ind), type = "random", iter = 20)
+  ies_df$LAT[ies_loc_ind] <- st_coordinates(ies_points)[, "Y"]
+  ies_df$LON[ies_loc_ind] <- st_coordinates(ies_points)[, "X"]
 }   
 
 ## Assign an ESC code
-ies_coor = coordinates(ies_df %>% dplyr::select(LAT, LON)) 
-ies_coor = as.data.frame(ies_coor)
-coordinates(ies_coor) = ~  LON + LAT
-proj4string(ies_coor) = proj4string(esc_shp)
-crs(ies_coor) <- crs(esc_shp)
+#ies_coor = coordinates(ies_df %>% dplyr::select(LAT, LON)) 
+#ies_coor = as.data.frame(ies_coor)
+#coordinates(ies_coor) = ~  LON + LAT
+#proj4string(ies_coor) = proj4string(esc_shp)
+#crs(ies_coor) <- crs(esc_shp)
+ies_coor = ies_df %>% dplyr::select(LAT, LON)
+ies_coor <- st_as_sf(ies_coor, coords = c("LON", "LAT"), crs = st_crs(esc_shp))
 
+#for(ss in 1:nrow(esc_shp)){
+#    ies_esc = sp::over(ies_coor, esc_shp[ss,])
+#    if(length(which(!is.na(ies_esc[,1]))) > 0){
+#        ies_df$Zone[which(!is.na(ies_esc[,1]))] = as.character(esc_shp@data$SCACODIGO[ss])
+#    }
+#}
+
+#if(length(which(ies_df$Zone == "")) > 0){
+#    ies_df$Zone[which(ies_df$Zone == "")] = as.character(esc_shp@data$SCACODIGO[as.numeric(apply(rgeos::gDistance(ies_coor[which(ies_df$Zone == "")], esc_shp, byid = T), 2,which.min))])
+#}
 for(ss in 1:nrow(esc_shp)){
-    ies_esc = sp::over(ies_coor, esc_shp[ss,])
-    if(length(which(!is.na(ies_esc[,1]))) > 0){
-        ies_df$Zone[which(!is.na(ies_esc[,1]))] = as.character(esc_shp@data$SCACODIGO[ss])
-    }
+  ies_esc = sf::st_join(ies_coor, esc_shp[ss,])
+  if(length(which(!is.na(ies_esc$SCACODIGO))) > 0){
+    ies_df$Zone[which(!is.na(ies_esc$SCACODIGO))] = as.character(esc_shp$SCACODIGO[ss])
+  }
 }
 
 if(length(which(ies_df$Zone == "")) > 0){
-    ies_df$Zone[which(ies_df$Zone == "")] = as.character(esc_shp@data$SCACODIGO[as.numeric(apply(rgeos::gDistance(ies_coor[which(ies_df$Zone == "")], esc_shp, byid = T), 2,which.min))])
+  ies_df$Zone[which(ies_df$Zone == "")] = as.character(esc_shp$SCACODIGO[as.numeric(apply(sf::st_distance(ies_coor[which(ies_df$Zone == "")], esc_shp), 1,which.min))])
 }
 
 ies_df = ies_df %>%
