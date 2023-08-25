@@ -395,7 +395,7 @@ for(ll in 1:nrow(localities_data_shp)){
   if(length(ies_loc_ind) == 0){next}
   
   ## MAybe use tryCatch if too many errors with iter too small
-  ies_points <- st_sample(localidad_tmp_shp, size = length(ies_loc_ind), type = "random", iter = 20)
+  ies_points <- sf::st_sample(localidad_tmp_shp, size = length(ies_loc_ind), type = "random", iter = 20)
   ies_df$LAT[ies_loc_ind] <- st_coordinates(ies_points)[, "Y"]
   ies_df$LON[ies_loc_ind] <- st_coordinates(ies_points)[, "X"]
 }   

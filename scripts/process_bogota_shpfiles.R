@@ -56,10 +56,10 @@ esc_coor <- st_as_sf(esc_coor, coords = c("X", "Y"), crs = st_crs(localities_shp
 for(ll in 1:nrow(localities_shp)){
   print(ll)
   esc_locality = sf::st_join(esc_coor, localities_shp[ll,])
-  esc_data$Localidad[which(!is.na(esc_locality[,1])[,1])] = localities_shp$Identificad[ll]
+  esc_data$Localidad[which(!is.na(esc_locality$Identificad))] = localities_shp$Identificad[ll]
 }
 
-esc_data<-data.frame(esc_data[,1:3])
+esc_data<-data.frame(esc_data)[,c(1,2,4)]
 esc_data$Localidad[esc_data$SCACODIGO == '108108'] = 1
 esc_shp$Localidad = esc_data$Localidad
 esc_list = unique(as.character(esc_data$SCACODIGO))
@@ -92,13 +92,12 @@ block_data$SCACODIGO = "0"
 #}
 for(ee in 1:nrow(esc_shp)){
     block_esc = sf::st_join(block_coor, esc_shp[ee,])
-    block_data$SCACODIGO[which(!is.na(block_esc[,1])[,1])] = as.character(esc_shp$SCACODIGO[ee])
+    block_data$SCACODIGO[which(!is.na(block_esc$SCACODIGO))] = as.character(esc_shp$SCACODIGO[ee])
 }
 
 #block_shp@data$SCACODIGO = block_data$SCACODIGO
 block_shp$SCACODIGO = block_data$SCACODIGO
-block_data<-data.frame(block_data[,c(1:6,8)])
-block_data<-data.frame(block_data[,c(1:7)])
+block_data<-data.frame(block_data)[,c(1:6,8)]
 
 write_csv(block_data, '../data/processed_data/geodata/Manzana_Unidad_Catastral.csv')
 
@@ -135,7 +134,7 @@ esc_coor <- st_as_sf(esc_coor, coords = c("X", "Y"), crs = st_crs(upz_shp))
 for(uu in 1:nrow(upz_shp)){
     print(uu)
     esc_upz = sf::st_join(esc_coor, upz_shp[uu,])
-    esc_data$upz[which(!is.na(esc_upz[,1])[,1])] = as.character(upz_shp$UPlCodigo[uu])
+    esc_data$upz[which(!is.na(esc_upz$UPlCodigo))] = as.character(upz_shp$UPlCodigo[uu])
 }
 
 #if(length(which(esc_data$upz == "")) > 0){
@@ -145,8 +144,7 @@ if(length(which(esc_data$upz == "")) > 0){
   esc_data$upz[which(esc_data$upz == "")] = as.character(upz_shp$UPlCodigo[as.numeric(apply(sf::st_distance(esc_coor[which(esc_data$upz == ""),], upz_shp), 1,which.min))])
 }
 
-esc_data<-data.frame(esc_data[,c(1:2,4)])
-esc_data<-data.frame(esc_data[,c(1:3)])
+esc_data<-data.frame(esc_data)[,c(1:2,4)]
 
 write_csv(esc_data, '../data/processed_data/geodata/UPZ_Unidad_Catastral.csv')
 
