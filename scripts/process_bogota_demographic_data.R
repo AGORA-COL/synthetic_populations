@@ -7,6 +7,8 @@
 ##=======================================#
 library(tidyverse)
 
+setwd('/mnt/disco_aux/trace/apps/synthetic_populations/scripts')
+
 datadir = '../data/raw_data/popdata'
 popfile = file.path(datadir, 'OSB_Demografia-PiramideBogotaLocalidades.csv')
 
@@ -86,4 +88,3 @@ pop_age = pop_age %>%
 
 write.csv(x = pop_age,file='../data/processed_data/popdata/bogota_population_data_sec.csv',row.names = FALSE)
 write.csv(x = pop_household,file='../data/processed_data/popdata/bogota_household_composition_sec.csv',row.names = FALSE)
-

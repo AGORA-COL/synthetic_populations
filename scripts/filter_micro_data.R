@@ -7,7 +7,7 @@
 ##===============================================================#
 library(tidyverse)
 
-
+setwd('/mnt/disco_aux/trace/apps/synthetic_populations/scripts')
 ##===============================================================#
 ## Read and filter micro-data Colombia--------
 ##===============================================================#
@@ -22,11 +22,10 @@ for(n in 1:length(adm_codes)){
     adm_code = as.numeric(sprintf('%03d%06d',country_code,am)) #adm_code refers to IPUMS code!!
   
     micro_data = country_microdata %>% filter(GEOLEV2 == adm_code) %>%
-        select(c(COUNTRY,SERIAL,HHWT,GEOLEV1,GEOLEV2,
+        dplyr::select(c(COUNTRY,SERIAL,HHWT,GEOLEV1,GEOLEV2,
                  GQ,URBAN,OWNERSHIP,HHTYPE,NFAMS, PERNUM,
                  AGE,SEX,SCHOOL,EMPSTAT,EMPSTATD,RELATE))
     
     write.csv(x = micro_data,
               file=sprintf('../data/processed_data/microdata/colombia_microdata_%d.csv',divipola_codes[n]), row.names = FALSE)
 }
-

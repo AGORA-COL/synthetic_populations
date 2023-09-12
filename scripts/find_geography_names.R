@@ -64,8 +64,8 @@ synth_locations_shpdata <- function(country_name_gdam,
 countries_datalist = rjson::fromJSON(
                                 file = '../data/param_files/countries_latam_metadata.json',
                                 simplify = F)
-country_name = "brazil"
-city_name = "Goiana"
+country_name    = "brazil"
+city_name       = "Goiana"
 
 ##===============================================================#        
 ## Select a country and run the generator--------------

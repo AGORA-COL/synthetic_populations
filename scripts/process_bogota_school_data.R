@@ -18,6 +18,7 @@ library(RCurl)
 library(data.table)
 options(digits = 20,scipen = 999)
 
+setwd('/mnt/disco_aux/trace/apps/synthetic_populations/scripts')
 
 datadir = '../data/raw_data/popdata'
 schools_sed = '../data/raw_data/schooldata/20200908 Información Modelo Epidemiologico.xlsx'                         
@@ -97,8 +98,11 @@ school_location_df = readxl::read_xlsx(school_sedes_file, skip = 1, sheet = 'Hoj
 ##=======================================#
 localidad_list = unique(school_location_df$NumberLocalidad)
 school_location_loc = tibble()
+
 for(ll in 1:length(localidad_list)){
+    print(localidad_list[ll])
     ind_coors = which(school_location_df$NumberLocalidad == localidad_list[ll])
+    unidad_catastral$Localidad <- as.numeric(unidad_catastral$Localidad)
     loc_unidad_catastral = filter(unidad_catastral, Localidad == localidad_list[ll])
     esc_loc_shp = esc_shp[esc_shp@data$SCACODIGO %in% loc_unidad_catastral$SCACODIGO,]
     tmp_school_location = filter(school_location_df, NumberLocalidad == localidad_list[ll])

@@ -18,14 +18,16 @@ library(RCurl)
 library(data.table)
 options(digits = 20,scipen = 999)
 
-datadir = '../data/raw_data/popdata'
-workplaces_file = '../data/raw_data/workplacedata/08092020 Unidad Economica ID.xlsx'
-mov_file = '../data/raw_data/workplacedata/03_Anexo D_Movilidad.xlsx'
+setwd('/mnt/disco_aux/trace/apps/synthetic_populations/scripts')
 
-workers_data =  readxl::read_xlsx(workplaces_file, skip = 0, sheet = 1)
+datadir          = '../data/raw_data/popdata'
+workplaces_file  = '../data/raw_data/workplacedata/08092020 Unidad Economica ID.xlsx'
+mov_file         = '../data/raw_data/workplacedata/03_Anexo D_Movilidad.xlsx'
+
+workers_data    =  readxl::read_xlsx(workplaces_file, skip = 0, sheet = 1)
 ## 1. Find a location for workplaces missing location
-workers_nodata = workers_data[is.na(workers_data$Latitud),]
-workers_data = workers_data[!is.na(workers_data$Latitud),]
+workers_nodata  = workers_data[is.na(workers_data$Latitud),]
+workers_data    = workers_data[!is.na(workers_data$Latitud),]
 
 localidad_shp = rgdal::readOGR('../data/raw_data/geodata/localidades_bogota/poligonos-localidades.shp')
 block_shp = rgdal::readOGR('../data/processed_data/geodata/manzanas_bogota/manzanas_bogota.shp')

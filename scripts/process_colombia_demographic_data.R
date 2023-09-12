@@ -6,6 +6,7 @@
 ## Libraries and data files--------
 ##=======================================#
 library(tidyverse)
+setwd('/mnt/disco_aux/trace/apps/synthetic_populations/scripts')
 
 datadir = '../data/raw_data/popdata'
 popfile = file.path(datadir,'Edades_Simples_1985-2020.xls')

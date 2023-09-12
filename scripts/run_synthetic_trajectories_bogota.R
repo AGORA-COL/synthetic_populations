@@ -19,6 +19,9 @@ library(RCurl)
 library(data.table)
 
 options(digits = 22, scipen = 999)
+
+setwd('/mnt/disco_aux/trace/apps/synthetic_populations/scripts')
+
 source('./synthetic_trajectories_functions_bogota.R')
 
 ##===============================================================#

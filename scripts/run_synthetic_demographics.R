@@ -17,11 +17,12 @@ require(lubridate)
 library(data.table)
 options(digits = 20,scipen = 999)
 
+setwd('/mnt/disco_aux/trace/apps/synthetic_populations/scripts')
 ##===============================================================#
 ## Read Input-------------
 ##===============================================================#
 country_name = "colombia"
-city_name = "Armenia"
+city_name = "Bogota"
 metadata_file = file.path("..", "data", "param_files", "countries_latam_metadata.json")
 population_cap = -1
 args = (commandArgs(TRUE))

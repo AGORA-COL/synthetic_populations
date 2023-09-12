@@ -53,6 +53,11 @@ synthesize_population = function(microdata_file, agepop_file, country_code,
         }
     }
     ## Read marginal distributions
+
+    agepop_data = read_csv(agepop_file) %>% 
+        filter(Year == year_pop)
+
+
     agepop_data = read_csv(agepop_file) %>% 
         filter(Code == sprintf("%05d",adm_census_code), Year == year_pop, 
                AgeGroup != 'Total', Gender != 'Total') %>%
@@ -303,7 +308,7 @@ synthesize_population_bog = function(microdata_file, agepop_file, country_code,
     ## Sex: Male = 1, Female = 2    
     brks = c(as.integer(breaks_df$MinAge),200)
     lbls = breaks_df$Labels
-    cat(sprintf("breaks and labels created for %d-%d\n",country_code,adm_code))
+    cat(sprintf("breaks and labels created for %d-%d\n", country_code, adm_code))
     microdata_hhsize = micro_data %>% 
         group_by(SERIAL) %>% summarize(HHSIZE = n()) %>% ungroup()
     
@@ -406,12 +411,15 @@ synthesize_population_bog = function(microdata_file, agepop_file, country_code,
     calibrated_weights = surveysd::ipf(micro_data, hid = NULL, 
                               conP = list(consP, consW, consS),
                               conH = consH,
-                              epsP = 1e-07,
-                              epsH = 0.001,
+                              #epsP = 1e-7,
+                              epsP = 1e-7,
+                              epsH = 1e-3,
                               w = "HHWT",
                               bound = NULL, 
                               verbose = TRUE, 
-                              maxIter = 2000)
+                              maxIter = 5000)
+
+    ##browser()
     
     micro_data$ADJHHWT = calibrated_weights$calibWeight
     micro_data = as_tibble(micro_data)

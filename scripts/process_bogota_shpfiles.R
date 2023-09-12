@@ -19,14 +19,14 @@ library(RCurl)
 library(data.table)
 options(digits = 20,scipen = 999)
 
-
+setwd('/mnt/disco_aux/trace/apps/synthetic_populations/scripts')
 ##===============================================================#
 ## Shapefiles-------------
 ##===============================================================#
-upz_shp = rgdal::readOGR('../data/raw_data/geodata/UPZ_Bogota/UPla.shp')
-localities_shp = rgdal::readOGR('../data/raw_data/geodata/localidades_bogota/poligonos-localidades.shp')
-esc_shp = rgdal::readOGR('../data/raw_data/geodata/scat_shp/scat_shp.shp')
-esc_data = esc_shp@data[,c('SCACODIGO', 'SCANOMBRE')]
+upz_shp         = rgdal::readOGR('../data/raw_data/geodata/UPZ_Bogota/UPla.shp')
+localities_shp  = rgdal::readOGR('../data/raw_data/geodata/localidades_bogota/poligonos-localidades.shp')
+esc_shp         = rgdal::readOGR('../data/raw_data/geodata/scat_shp/scat_shp.shp')
+esc_data        = esc_shp@data[,c('SCACODIGO', 'SCANOMBRE')]
 esc_data$Localidad = 0
 
 esc_coor = coordinates(esc_shp)
@@ -92,4 +92,3 @@ if(length(which(esc_data$upz == "")) > 0){
 
 
 write_csv(esc_data, '../data/processed_data/geodata/UPZ_Unidad_Catastral.csv')
-

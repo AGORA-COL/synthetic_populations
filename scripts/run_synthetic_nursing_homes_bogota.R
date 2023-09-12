@@ -20,7 +20,7 @@ library(RCurl)
 library(data.table)
 options(digits = 22,scipen = 999)
 
-
+setwd('/mnt/disco_aux/trace/apps/synthetic_populations/scripts')
 data_dir = '../data/raw_data/microdata/11Bogota'
 
 country_name = "colombia"

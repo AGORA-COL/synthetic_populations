@@ -5,6 +5,8 @@
 ##===============================================================#
 ## Set up--------
 ##===============================================================#
+setwd('/mnt/disco_aux/trace/apps/synthetic_populations/scripts')
+
 library(tidyverse)
 library(mipfp)
 library(simPop)
@@ -15,7 +17,7 @@ source('./synthetic_demography_functions.R')
 ## Create a list with all the posible countries--------------
 ##===============================================================#
 countries_metadata = rjson::fromJSON(
-                                file = '../data/param_files/countries_metadata.json',
+                                file = '../data/param_files/countries_latam_metadata.json',
                                 simplify = F)
 ##===============================================================#
 ## Use the population sinthesizer--------
@@ -26,7 +28,7 @@ if(!dir.exists(outputdir)){
 }
 
 run_all = FALSE
-country = "brazil"
+country = "colombia"
 
 ##==========================================================================#
 ## Run the pop synthesizer --------------------
