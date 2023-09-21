@@ -25,11 +25,11 @@ setwd('/mnt/disco_aux/trace/apps/synthetic_populations/scripts')
 ## 0. Data--------------
 ##===============================================================#
 ## Data
-unidad_catastral = read_csv('../data/processed_data/geodata/Localidad_Unidad_Catastral.csv')
-synth_pop = read_csv('../output/formatted_populations/colombia_11001/colombia_11001_synth_people.txt', col_types = cols(.default = "c"))
-synth_houses = read_csv('../output/formatted_populations/colombia_11001/colombia_11001_synth_households.txt', col_types = cols(.default = "c"))
-schools_df = read_csv('../output/formatted_populations/colombia_11001/colombia_11001_schools.txt')
-workplaces_df = read_csv('../output/formatted_populations/colombia_11001/colombia_11001_workplaces.txt')
+unidad_catastral    = read_csv('../data/processed_data/geodata/Localidad_Unidad_Catastral.csv')
+synth_pop           = read_csv('../output/formatted_populations/colombia_11001/colombia_11001_synth_people.txt', col_types = cols(.default = "c"))
+synth_houses        = read_csv('../output/formatted_populations/colombia_11001/colombia_11001_synth_households.txt', col_types = cols(.default = "c"))
+schools_df          = read_csv('../output/formatted_populations/colombia_11001/colombia_11001_schools.txt')
+workplaces_df       = read_csv('../output/formatted_populations/colombia_11001/colombia_11001_workplaces.txt')
 
 for(localidad_filter in 1:19){
     loc_esc = filter(unidad_catastral, Localidad == localidad_filter)

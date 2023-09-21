@@ -19,6 +19,8 @@ library(RCurl)
 library(data.table)
 options(digits = 20,scipen = 999)
 
+setwd('/mnt/disco_aux/trace/apps/synthetic_populations/scripts')
+
 contains_grade <- function(grade_str, grade_target){
     grade_df = tibble(grade = as.numeric(unlist(str_split(grade_str, ",")))) %>%
         mutate(grade_name = ifelse(grade < 0, "prek",
@@ -52,11 +54,11 @@ print(sprintf("Running synthetic population generator for %s:%s from %s",country
 ##===============================================================#
 source('./synthetic_geographic_locations_functions.R')
 
-processed_data_dir = file.path("..","data", "processed_data")
+processed_data_dir = file.path("..","data", "processed_data_")
 outputdir_microdata = file.path('..','output','synthesized_microdata')
-raw_geodata_path = file.path('..','data','raw_data','geodata')
+raw_geodata_path = file.path('..','data_','raw_data','geodata')
 report_dir = file.path("..","output","reports")
-osm_retag_file = file.path('..','data','processed_data','geodata','retag_OSM_buildings.csv')
+osm_retag_file = file.path('..','data','processed_data_','geodata','retag_OSM_buildings.csv')
 
 ##===============================================================#
 ## 0. Process inputs--------

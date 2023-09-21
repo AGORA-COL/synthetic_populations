@@ -23,9 +23,9 @@ setwd('/mnt/disco_aux/trace/apps/synthetic_populations/scripts')
 ##===============================================================#
 ## Read Input-------------
 ##===============================================================#
-country_name = "colombia"
-city_name = "Bogota"
-metadata_file = file.path("..", "data", "param_files", "countries_latam_metadata.json")
+country_name    = "colombia"
+city_name       = "Bogota"
+metadata_file   = file.path("..", "data", "param_files", "countries_latam_metadata.json")
 country_shp_file = "../data/raw_data/geodata/Colombia_shp/Municipios.shp"
 
 args = (commandArgs(TRUE))
@@ -88,6 +88,7 @@ people_file = file.path(
 ##===============================================================#
 ## 1.Get geo data for localities / nb--------
 ##===============================================================#
+
 ## vulnr_shp = rgdal::readOGR('../data/raw_data/geodata/vulnrb_data/VULNRB_IPMxMZ.shp')
 ## vulnr2 = vulnr_shp[vulnr_shp@data$COD_DPTO == 11,]
 ## zones_names = tolower(iconv(localities_shp@data$Nombre_de_l,from="UTF-8",to="ASCII//TRANSLIT"))
@@ -215,20 +216,18 @@ write.csv(
     na = "",row.names = F,quote = F
 )
 
-## write.csv(
-##     synth_locations$city_schools,
-##     file.path(formatted_dir,              
-##               sprintf('%s_%d_schools.txt',country_name,city_code)
-##               ),
-##     na = "", row.names = F,quote =F
-## )
+write.csv(
+    synth_locations$city_schools,
+    file.path(formatted_dir,              
+              sprintf('%s_%d_schools.txt',country_name,city_code)
+              ),
+    na = "", row.names = F,quote =F
+)
 
-## write.csv(
-##     synth_locations$city_workplaces,
-##     file.path(formatted_dir,              
-##               sprintf('%s_%d_workplaces.txt',country_name,city_code)
-##               ),
-##     na = "", row.names = F, quote = F
-## )
-
-
+write.csv(
+    synth_locations$city_workplaces,
+    file.path(formatted_dir,              
+              sprintf('%s_%d_workplaces.txt',country_name,city_code)
+              ),
+    na = "", row.names = F, quote = F
+)

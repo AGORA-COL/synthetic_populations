@@ -1,3 +1,4 @@
+setwd('/mnt/disco_aux/trace/apps/synthetic_populations/scripts')
 ##===============================================================#
 ## Create report of Synthetic Population for Bogotá
 ## Author: Guido España
@@ -8,7 +9,6 @@
 library(dplyr)
 library(tidyverse)
 library(rjson)
-
 library(sf)
 library(raster)
 library(rgdal)
@@ -26,17 +26,17 @@ options(digits = 22,scipen = 999)
 ##===============================================================#
 ## Data
 
-age_data = read_csv('../data/processed_data/popdata/bogota_population_data_sec.csv')
-household_comp = read_csv('../data/processed_data/popdata/bogota_household_composition_sec.csv')
-synth_pop = read_csv('../output/formatted_populations/colombia_11001/colombia_11001_synth_people.txt', col_types = cols(.default = "c"))
-synth_houses = read_csv('../output/formatted_populations/colombia_11001/colombia_11001_synth_households.txt', col_types = cols(.default = "c"))
-schools_df = read_csv('../output/formatted_populations/colombia_11001/colombia_11001_schools.txt')
-workplaces_df = read_csv('../output/formatted_populations/colombia_11001/colombia_11001_workplaces.txt')
+age_data = read_csv('../data/processed_data_/popdata/bogota_population_data_sec.csv')
+household_comp = read_csv('../data/processed_data_/popdata/bogota_household_composition_sec.csv')
+synth_pop = read_csv('../output/formatted_populations_/colombia_11001/colombia_11001_synth_people.txt', col_types = cols(.default = "c"))
+synth_houses = read_csv('../output/formatted_populations_/colombia_11001/colombia_11001_synth_households.txt', col_types = cols(.default = "c"))
+schools_df = read_csv('../output/formatted_populations_/colombia_11001/colombia_11001_schools.txt')
+workplaces_df = read_csv('../output/formatted_populations_/colombia_11001/colombia_11001_workplaces.txt')
 
-esc_shp = rgdal::readOGR('../data/raw_data/geodata/scat_shp/scat_shp.shp')
-localidad_shp = rgdal::readOGR('../data/raw_data/geodata/localidades_bogota/poligonos-localidades.shp')
-block_shp = rgdal::readOGR('../data/raw_data/geodata/vulnrb_data/VULNRB_IPMxMZ.shp')
-upz_shp = rgdal::readOGR('../data/raw_data/geodata/UPZ_Bogota/UPla.shp')
+esc_shp = rgdal::readOGR('../data/raw_data_/geodata/scat_shp/scat_shp.shp')
+localidad_shp = rgdal::readOGR('../data/raw_data_/geodata/localidades_bogota/poligonos-localidades.shp')
+block_shp = rgdal::readOGR('../data/raw_data_/geodata/vulnrb_data/VULNRB_IPMxMZ.shp')
+upz_shp = rgdal::readOGR('../data/raw_data_/geodata/UPZ_Bogota/UPla.shp')
     
 ##===============================================================#
 ## 1. Population pyramid and household composition--------------
@@ -213,7 +213,7 @@ dev.off()
 ##===============================================================#
 ## 4. School mobility-----------
 ##===============================================================#
-unidad_catastral = read_csv('../data/processed_data/geodata/Localidad_Unidad_Catastral.csv')
+unidad_catastral = read_csv('../data/processed_data_/geodata/Localidad_Unidad_Catastral.csv')
 localidad_names = data.frame(Localidad = as.numeric(localidad_shp@data$Identificad),
                              LocalidadName = tolower(as.character(localidad_shp@data$Nombre_de_l)),
                              stringsAsFactors = F) %>%
@@ -256,7 +256,7 @@ dev.off()
 ##===============================================================#
 ## 4. workplace mobility-----------
 ##===============================================================#
-workplace_geo = read_csv('../data/processed_data/workplacedata/workplace_bogota_data.csv') %>%
+workplace_geo = read_csv('../data/processed_data_/workplacedata/workplace_bogota_data.csv') %>%
     rename(WorkLocalidad = Localidad) 
 
 workers_df = synth_pop %>% filter(!is.na(sp_work_id)) %>%
@@ -293,7 +293,7 @@ dev.off()
 ##===============================================================#
 ## 4.1 Bogota input mobility-----------
 ##===============================================================#
-mov_df = read_csv('../data/processed_data/workplacedata/mobility_matrix_bogota_data.csv')  %>%
+mov_df = read_csv('../data/processed_data_/workplacedata/mobility_matrix_bogota_data.csv')  %>%
     filter(OrigenLocalidad != 20, DestinoLocalidad != 20) %>%
         arrange(OrigenLocalidad, DestinoLocalidad)
  
@@ -333,7 +333,7 @@ synth_workers = synth_pop %>% dplyr::filter(!is.na(sp_work_id))  %>%
     left_join(synth_pop_df, by = "AgeGroup") %>%
     mutate(PropWorkers = (TotalWorkers / sum(TotalWorkers) * 100))
 
-census_workers = read_csv('../data/raw_data/microdata/11Bogota/CNPV2018_5PER_A2_11.CSV') %>%
+census_workers = read_csv('../data/raw_data_/microdata/11Bogota/CNPV2018_5PER_A2_11.CSV') %>%
     mutate(AgeGroup = as.character(cut(as.numeric(P_EDADR)*5 - 1, breaks = brks, labels = lbls, include.lowest = T, right = F))) %>%
     group_by(AgeGroup, P_TRABAJO) %>% summarize(N = n()) %>%
     ungroup() %>%
