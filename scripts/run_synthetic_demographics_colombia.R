@@ -1,8 +1,8 @@
 setwd('/mnt/disco_aux/trace/apps/synthetic_populations/scripts')
 ##===============================================================#
 ## Generate synthetic populations from start to finish
-## Author: Guido España
-## Date: 2019/07/17
+## Author: Diego Veloza Diaz
+## Date: 2023/09/25
 ##===============================================================#
 ## Read Input-------------
 ##===============================================================#
@@ -12,6 +12,7 @@ library(rjson)
 library(mipfp)
 library(simPop)
 library(surveysd)
+library(survey)
 library(RColorBrewer)
 require(RCurl)
 require(lubridate)
@@ -45,7 +46,7 @@ outputdir_microdata = file.path('..','output','synthesized_microdata')
 report_dir = file.path("..","output","reports")
 
 school_file         = '../data/raw_data/schooldata/ESTADISTICAS_EN_EDUCACION_BASICA_POR_MUNICIPIO.csv'
-universities_file   = "../data/raw_data/schooldata/IES_Estudiantes_matriculados_2019.xlsx"
+universities_file   = "../data/raw_data/schooldata/IES_Estudiantes_matriculados_2019.csv"
 ##workplace_file    = "../data/raw_data/workplacedata/CENSUS_WORKPLACESv2.csv"
 workplace_file      = '../data/processed_data/workplacedata/workplace_colombia_data.csv'
 
@@ -89,7 +90,7 @@ zones_list = as.integer(unique(age_sec_df$Zone))
 
 age_sec_df <- age_sec_df %>%
   group_by(Zone, Gender, Year, Code) %>%
-  mutate(AgeGroup = ifelse(AgeGroup %in% c("80-84", "85-89", "90-94", "95-99", "100-above"), "80-above", AgeGroup)) %>%
+  mutate(AgeGroup = ifelse(AgeGroup %in% c("70-74", "75-79", "80-84", "85-89", "90-94", "95-99", "100-above"), "70-above", AgeGroup)) %>% #
   group_by(AgeGroup, add = TRUE) %>%
   summarise(Pop = sum(Pop)) %>% filter(Zone != '00')
 
@@ -115,76 +116,96 @@ print(sprintf("creating synthetic population for country %s departamento %d",
 pop_counter = 0
 house_counter = 0
 
-for(zz in 5:length(zones_list)){
-    mun_code_ = zones_list[zz]
+
+school_coverage_data = read_csv(school_file) %>%
+        rename(year = "AÑO", mun_code = "CÓDIGO_MUNICIPIO", coverage = "TASA_MATRICULACIÓN_5_16") 
+
+
+university_coverage_data = read_csv(universities_file) %>%
+        filter(SEMESTRE == 1) %>%
+        rename(mun_code = "CÓDIGO DEL MUNICIPIO (PROGRAMA)",
+                name = "INSTITUCIÓN DE EDUCACIÓN SUPERIOR (IES)",
+                capacity = "MATRICULADOS")
+
+micro_data = read_csv(unlist(departamento_data$microdata_file)) %>% 
+                    mutate(HHWT = as.double(HHWT)) %>%
+                    drop_na()
+
+micro_data$AGE[micro_data$AGE > 99] = 99
+
+house_list = list()
+people_list = list()
+
+for(mun_code_ in zones_list){
+# for(mun_code_ in c(73349)){
+    #mun_code_ = zones_list[zz]
+    print(paste(mun_code_, '---', sep = " ", " "))
     total_city_pop = sum((age_sec_df %>% filter(as.numeric(Zone) == mun_code_, Year == unique(departamento_data$year_pop)))$Pop)
 
-    cat(crayon::red(sprintf("\n%s current_pop %d\n",zones_list[zz], pop_counter)))
-    tmp_age_file = "tmp_age_file.csv"
-    write_csv(x = age_sec_df %>% filter(as.numeric(Zone) == zones_list[zz]) %>%dplyr::select(-Zone),
-              path = tmp_age_file)
-    tmp_house =  household_comp %>% filter(as.numeric(Zone) == zones_list[zz], NumHouses > 0)
+
+    cat(crayon::red(sprintf("\n%s current_pop %d\n", mun_code_, pop_counter)))
+    # tmp_age_file = "tmp_age_file.csv"
+    # write_csv(x = age_sec_df %>% filter(as.numeric(Zone) == mun_code_) %>%dplyr::select(-Zone),
+    #           path = tmp_age_file)
+
+    tmp_house =  household_comp %>% filter(as.numeric(Zone) == mun_code_, NumHouses > 0) #
+
+
     tmp_pop = synthesize_population_col(
-        microdata_file = unlist(departamento_data$microdata_file),
-        agepop_file = tmp_age_file,
-        country_code = unlist(departamento_data$country_code),
-        adm_code = unlist(departamento_data$departamento_code),
+        micro_data      = micro_data,
+        # agepop_file     = tmp_age_file,
+        agepop_data_    = age_sec_df %>% filter(as.numeric(Zone) == mun_code_),
+        country_code    = unlist(departamento_data$country_code),
+        adm_code        = unlist(departamento_data$departamento_code),
         adm_census_code = mun_code_,
-        year_pop = unlist(departamento_data$year_pop),
-        school_file = school_file,
+        year_pop        = unlist(departamento_data$year_pop),
+        school_file     = school_file,
         university_file = university_file,
-        workplace_file = workplace_file,
-        people_file = sprintf("%s/synthetic_microdata_people_%s_%d.csv",
+        workplace_file  = workplace_file,
+        people_file     = sprintf("%s/synthetic_microdata_people_%s_%d.csv",
                               outputdir_microdata,
                               country_name,
-                              unlist(departamento_data$departamento_code)),
-        house_file = sprintf("%s/synthetic_microdata_%s_%d.csv",
+                              unlist(departamento_data$departamento_code)), 
+        house_file      = sprintf("%s/synthetic_microdata_%s_%d.csv",
                              outputdir_microdata,
-                         country_name,
-                         unlist(departamento_data$departamento_code)),
-        fitHCons = T,
-        HCons_df = tmp_house,
-        capPop = population_cap,
-        subcity = TRUE,
+                             country_name,
+                             unlist(departamento_data$departamento_code)),
+        fitHCons        = T,
+        HCons_df        = tmp_house,
+        capPop          = population_cap,
+        subcity         = TRUE,
         subcity_counter = pop_counter,
-        subcity_zone = zones_list[zz],
+        subcity_zone    = mun_code_,
         subcity_total_pop = total_city_pop,
-        house_counter)
-    unlink(tmp_age_file)
-    pop_counter = pop_counter + tmp_pop$total_pop
-    house_counter = tmp_pop$total_houses
+        house_counter,
+        school_coverage_data,
+        university_coverage_data)
+
+    # Access the individual components
+    house_data   = tmp_pop$house_data
+    people_data  = tmp_pop$people_data
+    total_pop    = tmp_pop$total_pop
+    total_houses = tmp_pop$total_houses
+    rm(tmp_pop)
+
+    house_list[[length(house_list) + 1]] = house_data
+    people_list[[length(people_list) + 1]] = people_data
+
+    # # Optional: write to CSV files
+    # write_csv(house_data, house_file)
+    # write_csv(people_data, people_file)
+
+    
+    # unlink(tmp_age_file)
+    pop_counter     = pop_counter + total_pop
+    house_counter   = total_houses
 }
-
-# universities_file_old   = "../data/raw_data_/schooldata/colombia_matriculados_educacion_superior_2018.xlsx"
-# university_coverage_old = readxl::read_xlsx(universities_file_old, skip = 5)
-
-
-# university_coverage = readxl::read_xlsx(universities_file, skip = 7)
-
-# zz = 1
-# mun_code_ = zones_list[zz]
-
-# t = university_coverage %>%
-#     filter(SEMESTRE == 1) %>%
-#     rename(mun_code = "CÓDIGO DEL MUNICIPIO (PROGRAMA)",
-#             name = "INSTITUCIÓN DE EDUCACIÓN SUPERIOR (IES)",
-#             capacity = "MATRICULADOS") %>%
-#     dplyr::select(mun_code, name, capacity) %>%
-#     filter(as.numeric(mun_code) == mun_code_)
-
-# unique(t$mun_code)
-
-
-
-# university_coverage = readxl::read_xlsx(universities_file, skip = 7) %>%
-#     filter(SEMESTRE == 1) %>%
-#     rename(mun_code = "CÓDIGO DEL MUNICIPIO (PROGRAMA)",
-#             name = "INSTITUCIÓN DE EDUCACIÓN SUPERIOR (IES)",
-#             capacity = "MATRICULADOS") %>%
-#     dplyr::select(mun_code, name, capacity) %>%
-#     filter(as.numeric(mun_code) == mun_code_) %>%
-#     group_by(mun_code, name) %>%
-#     summarize(capacity = sum(capacity, na.rm = T)) %>% ungroup() %>%
-#     filter(capacity > 10) %>% group_by(mun_code) %>%
-#     summarize(capacity = sum(capacity, na.rm = T)) %>% ungroup() %>%
-#     mutate(year = 2019, mun_code = as.numeric(mun_code))
+print('########################################')
+write_csv(bind_rows(house_list), sprintf("%s/synthetic_microdata_%s_%d.csv",
+                             outputdir_microdata,
+                             country_name,
+                             unlist(departamento_data$departamento_code)))
+write_csv(bind_rows(people_list), sprintf("%s/synthetic_microdata_people_%s_%d.csv",
+                              outputdir_microdata,
+                              country_name,
+                              unlist(departamento_data$departamento_code)))

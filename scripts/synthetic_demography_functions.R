@@ -470,28 +470,28 @@ synthesize_population_bog = function(microdata_file, agepop_file, country_code,
 }
 
 
-#' synthesize_population_col()
+# ' synthesize_population_col()
+# ' 
+# ' This function creates a synthetic population using microdata
+# ' from IPUMS-International and using age and gender-stratified estimates of
+# ' population
+# ' @param microdata_file (character) path of the file with the IPUMS microdata for the region of interest
+# ' @param agepop_file (character) path of the file with the population estimates by gender and agegroups
+# ' @param country_code (numeric) 3 digit number for the country, e.g., 170 -> Colombia
+# ' @param adm_code (numeric) administrative code used in IPUMS for the region of interest
+# ' @param adm_census_code (numeric) administrative code used by the national government for statistical purposes
+# ' @param year_pop (numeric) year of the population estimates
+# ' @param fitHCons (boolean) (default = FALSE) should house constraints be included?
+# ' 
+# ' @return A list of dataframes for synthetic people and their synthetic houses
+# ' @export
+# ' @examples
+# '
+# ' synth_data = synthesize_population(microdata_file = "colombia_microdata.csv",
+# ' agepop_file = "colombia_pop_2010.csv", country_code = 170, adm_code = 25005,
+# ' adm_census_code = 25307, year_pop = 2010)
 #' 
-#' This function creates a synthetic population using microdata
-#' from IPUMS-International and using age and gender-stratified estimates of
-#' population
-#' @param microdata_file (character) path of the file with the IPUMS microdata for the region of interest
-#' @param agepop_file (character) path of the file with the population estimates by gender and agegroups
-#' @param country_code (numeric) 3 digit number for the country, e.g., 170 -> Colombia
-#' @param adm_code (numeric) administrative code used in IPUMS for the region of interest
-#' @param adm_census_code (numeric) administrative code used by the national government for statistical purposes
-#' @param year_pop (numeric) year of the population estimates
-#' @param fitHCons (boolean) (default = FALSE) should house constraints be included?
-#' 
-#' @return A list of dataframes for synthetic people and their synthetic houses
-#' @export
-#' @examples
-#'
-#' synth_data = synthesize_population(microdata_file = "colombia_microdata.csv",
-#' agepop_file = "colombia_pop_2010.csv", country_code = 170, adm_code = 25005,
-#' adm_census_code = 25307, year_pop = 2010)
-#' 
-synthesize_population_col = function(microdata_file, agepop_file, country_code,
+synthesize_population_col = function(micro_data, agepop_data_, country_code,
                                  adm_code, adm_census_code, year_pop,
                                  school_file,university_file, workplace_file,
                                  people_file, house_file,
@@ -499,7 +499,9 @@ synthesize_population_col = function(microdata_file, agepop_file, country_code,
                                  capPop = -1,
                                  subcity = FALSE, subcity_counter = 0,
                                  subcity_zone = "", subcity_total_pop = 0,
-                                 house_counter = 0){
+                                 house_counter = 0,
+                                school_coverage_data,
+                                university_coverage_data){
 
     ##browser()
 
@@ -507,13 +509,13 @@ synthesize_population_col = function(microdata_file, agepop_file, country_code,
         unlink(people_file)
         unlink(house_file)
     }
-    micro_data = read_csv(microdata_file) %>% mutate(HHWT = as.double(HHWT)) %>%
-        drop_na()
-    micro_data$AGE[micro_data$AGE > 99] = 99
+    # micro_data = read_csv(microdata_file) %>% mutate(HHWT = as.double(HHWT)) %>%
+    #     drop_na()
+    # micro_data$AGE[micro_data$AGE > 99] = 99
 
     propCap = 1.0
     if(capPop > 100000){
-        tmp_n = read_csv(agepop_file) %>%
+        tmp_n = agepop_data_ %>%
             filter(as.numeric(Zone) == adm_census_code, Year == year_pop, 
                    AgeGroup != 'Total', Gender != 'Total') %>%
             tally(Pop) %>% pull(n)
@@ -521,8 +523,8 @@ synthesize_population_col = function(microdata_file, agepop_file, country_code,
             propCap = capPop / tmp_n
         }
     }
-    ## Read marginal distributions
-    agepop_data = read_csv(agepop_file) %>% 
+    # Read marginal distributions
+    agepop_data = agepop_data_ %>% 
         filter(as.numeric(Zone) == adm_census_code, Year == year_pop, 
                AgeGroup != 'Total', Gender != 'Total') %>%
         mutate(Gender = ifelse(Gender == "Male","m","f")) %>%
@@ -545,7 +547,7 @@ synthesize_population_col = function(microdata_file, agepop_file, country_code,
     microdata_hhsize = micro_data %>% 
         group_by(SERIAL) %>% summarize(HHSIZE = n()) %>% ungroup()
     
-    micro_data = micro_data %>%
+    micro_data_ <- micro_data %>%
         mutate(GENDER = ifelse(SEX == 1, "m","f")) %>%
         mutate(AGEGROUP = cut(micro_data$AGE,breaks = brks, labels = lbls, right = FALSE)) %>%
         unite(AGEGENDER, GENDER, AGEGROUP, sep = "", remove= FALSE) %>%
@@ -578,16 +580,17 @@ synthesize_population_col = function(microdata_file, agepop_file, country_code,
 
     ## SCHOOL CONSTRAINTS
     ## 1. Assume people only go to school from 4 to 18
-    school_coverage = read_csv(school_file) %>%
-        rename(year = "AÑO", mun_code = "CÓDIGO_MUNICIPIO", coverage = "TASA_MATRICULACIÓN_5_16") %>%
+    school_coverage = school_coverage_data %>%
         dplyr::select(year, mun_code, coverage) %>% filter(year == 2018, mun_code == mun_code_) %>%
         mutate(coverage = coverage / 100)
     
-    university_coverage = readxl::read_xlsx(universities_file, skip = 7) %>%
-        filter(SEMESTRE == 1) %>%
-        rename(mun_code = "CÓDIGO DEL MUNICIPIO (PROGRAMA)",
-                name = "INSTITUCIÓN DE EDUCACIÓN SUPERIOR (IES)",
-                capacity = "MATRICULADOS") %>%
+    # university_coverage = readxl::read_xlsx(universities_file, skip = 7) %>%
+    #     filter(SEMESTRE == 1) %>%
+    #     rename(mun_code = "CÓDIGO DEL MUNICIPIO (PROGRAMA)",
+    #             name = "INSTITUCIÓN DE EDUCACIÓN SUPERIOR (IES)",
+    #             capacity = "MATRICULADOS")
+
+    university_coverage = university_coverage_data %>%
         dplyr::select(mun_code, name, capacity) %>%
         filter(as.numeric(mun_code) == mun_code_) %>%
         group_by(mun_code, name) %>%
@@ -595,6 +598,10 @@ synthesize_population_col = function(microdata_file, agepop_file, country_code,
         filter(capacity > 10) %>% group_by(mun_code) %>%
         summarize(capacity = sum(capacity, na.rm = T)) %>% ungroup() %>%
         mutate(year = 2018, mun_code = as.numeric(mun_code))
+
+    if(unlist(nrow(school_coverage)) == 0){
+        school_coverage = data.frame(year = 2018, mun_code = as.numeric(mun_code_), capacity = 0)
+    }
 
     if(unlist(nrow(university_coverage)) == 0){
         university_coverage = data.frame(year = 2018, mun_code = as.numeric(mun_code_), capacity = 0)
@@ -610,7 +617,7 @@ synthesize_population_col = function(microdata_file, agepop_file, country_code,
     print(school_coverage)
     print(university_coverage)
     
-    school_year_pop = read_csv(agepop_file) %>%
+    school_year_pop = agepop_data_ %>%
         filter(as.numeric(Zone) == adm_census_code, Year == school_coverage$year, 
                AgeGroup != 'Total', Gender != 'Total') %>%
         tally(Pop) %>% pull(n)
@@ -635,7 +642,7 @@ synthesize_population_col = function(microdata_file, agepop_file, country_code,
     ##browser()
 
     ## IPF Algorithm
-    setDT(micro_data)
+    setDT(micro_data_)
     if(fitHCons == TRUE){
         HCons_df$HHSIZE = HCons_df$PersonsHousehold
         consH = list(xtabs(NumHouses ~ HHSIZE, data = HCons_df))
@@ -644,7 +651,7 @@ synthesize_population_col = function(microdata_file, agepop_file, country_code,
     }
     
     cat(sprintf("calibrating weights for %d-%d\n",country_code, adm_census_code))
-    calibrated_weights = surveysd::ipf(micro_data, hid = NULL, 
+    calibrated_weights = surveysd::ipf(micro_data_, hid = NULL, 
                               conP = list(consP, consW, consS),
                               conH = consH,
                               #epsP = 1e-7,
@@ -652,56 +659,85 @@ synthesize_population_col = function(microdata_file, agepop_file, country_code,
                               epsH = 1e-3,
                               w = "HHWT",
                               bound = NULL, 
+                              returnNA = FALSE,
                               verbose = TRUE, 
                               maxIter = 5000)
-
     ##browser()
+    micro_data_$ADJHHWT = calibrated_weights$calibWeight
+    # micro_data = as_tibble(micro_data)
     
-    micro_data$ADJHHWT = calibrated_weights$calibWeight
-    micro_data = as_tibble(micro_data)
-    
+    # total_pop = 0
+    # total_houses = house_counter
+
+    # final_pop = sum(agepop_data$Pop)
+    # print(sprintf("People to create: %d", final_pop))
+    # micro_data = micro_data %>% drop_na()
+    # if(nrow(micro_data) == 0){
+    #     stop("Something went wrong when adjusting the weights, all outputs are NA")
+    # }
+
+    micro_data_$ADJHHWT = calibrated_weights$calibWeight
+    micro_data_ = as_tibble(micro_data_ %>% drop_na())
+
+    rm(calibrated_weights)
+
+    if(nrow(micro_data_) == 0){
+        stop("Something went wrong when adjusting the weights, all outputs are NA")
+    }
+
+    final_pop = sum(agepop_data$Pop)
     total_pop = 0
     total_houses = house_counter
 
-    final_pop = sum(agepop_data$Pop)
     print(sprintf("People to create: %d", final_pop))
-    micro_data = micro_data %>% drop_na()
-    if(nrow(micro_data) == 0){
-        stop("Something went wrong when adjusting the weights, all outputs are NA")
-    }
-    while(total_pop < final_pop){
-        print(total_pop)
-        tmphouse = sample_n(micro_data, 1, replace = T, weight = micro_data$ADJHHWT)
-        tmppeople = filter(micro_data,SERIAL == tmphouse$SERIAL)
-        tmphouse$HHID = sprintf('%03d%06d%07d', country_code,adm_census_code,total_houses + 1)
-        tmppeople$HHID = sprintf('%03d%06d%07d', country_code,adm_census_code,total_houses + 1)
-        if(subcity == TRUE){
-            tmphouse$ZONE = subcity_zone
-            tmppeople$ZONE = subcity_zone
-        }
-        if(subcity == FALSE){
-            if(total_pop == 0){
-                write_csv(tmphouse,house_file,append = F)
-                write_csv(tmppeople,people_file,append = F)
-            }else{
-                write_csv(tmphouse,house_file,append = T)
-                write_csv(tmppeople,people_file,append = T)
-            }
-        }else{
-            if(total_pop == 0 & subcity_counter == 0){
-                write_csv(tmphouse,house_file,append = F)
-                write_csv(tmppeople,people_file,append = F)
-            }else{
-                write_csv(tmphouse,house_file,append = T)
-                write_csv(tmppeople,people_file,append = T)
-            }
-        }
 
-        total_pop = total_pop + tmphouse$HHSIZE
-        total_houses = total_houses + 1
-        if(total_houses %% 1000 == 0){
-            cat("\rSubcity counter: ",subcity_counter, " Houses created:",total_houses, " People created: ", total_pop, "final pop: ", final_pop)
-        }
-    }    
-    return(list(total_pop=total_pop, total_houses = total_houses))
+    # Initialize lists to hold data
+    house_list = list()
+    people_list = list()
+    total_pop = 0
+    total_houses = 0
+
+    # Calculate the approximate number of iterations required
+    approx_iterations <- ceiling(final_pop / mean(micro_data_$HHSIZE))
+
+    # Iterate
+    for (i in 1:approx_iterations) {
+    tmphouse = sample_n(micro_data_, 1, replace = TRUE, weight = micro_data_$ADJHHWT)
+    tmppeople = filter(micro_data_, SERIAL == tmphouse$SERIAL)
+
+    new_id = sprintf('%03d%06d%07d', country_code, adm_census_code, total_houses + 1)
+    tmphouse$HHID = new_id
+    tmppeople$HHID = new_id
+
+    if (subcity) {
+        tmphouse$ZONE = subcity_zone
+        tmppeople$ZONE = subcity_zone
+    }
+
+    house_list[[length(house_list) + 1]] = tmphouse
+    people_list[[length(people_list) + 1]] = tmppeople
+
+    total_pop = total_pop + tmphouse$HHSIZE
+    total_houses = total_houses + 1
+
+    # Break the loop if total_pop exceeds final_pop
+    if (total_pop >= final_pop) {
+        break
+    }
+
+    # Progress logging
+    if (total_houses %% 1000 == 0) {
+        print(sprintf("Subcity counter: %d Houses created: %d People created: %d Final pop: %d", 
+                subcity_counter, total_houses, total_pop, final_pop))
+    }
+    }
+
+    # Concatenate all the data
+    house_data = bind_rows(house_list)
+    people_data = bind_rows(people_list)
+
+    rm(micro_data_)
+
+    return(list(house_data = house_data, people_data = people_data, 
+                total_pop = total_pop, total_houses = total_houses))
 }
